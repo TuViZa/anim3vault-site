@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anim3Vault</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      scroll-behavior: smooth;
+    }
+    header {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      padding: 30px 0;
+      font-size: 2.5em;
+      font-weight: bold;
+    }
+    .nav-buttons {
+      display: flex;
+      justify-content: center;
+      background: #222;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .nav-buttons a {
+      padding: 15px 25px;
+      margin: 5px;
+      color: white;
+      text-decoration: none;
+      background: #444;
+      border-radius: 8px;
+      transition: background 0.3s;
+    }
+    .nav-buttons a.active, .nav-buttons a:hover {
+      background: #f0f;
+      color: #000;
+    }
+    section {
+      height: 100vh;
+      padding: 40px;
+      color: white;
+      overflow-y: auto;
+    }
+    #anim3 { background: purple; }
+    #donghua { background: magenta; }
+    #news { background: red; }
+    iframe {
+      width: 100%;
+      max-width: 800px;
+      height: 400px;
+      border: none;
+      margin-top: 20px;
+      border-radius: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+
+<header>Anim3Vault</header>
+
+<div class="nav-buttons">
+  <a href="#anim3" class="btn" onclick="setActive(this)">Anim3</a>
+  <a href="#donghua" class="btn" onclick="setActive(this)">Donghu@</a>
+  <a href="#news" class="btn" onclick="setActive(this)">New$</a>
+</div>
+
+<section id="anim3">
+  <h2>Anim3 Section (Shorts)</h2>
+  <p>Latest anime shorts from YouTube.</p>
+  <iframe src="https://www.youtube.com/embed?listType=user_uploads&list=UCOGY-7CoO120P7_InxQpxRQ"></iframe>
+  <p style="text-align:center;">Or view all: <a href="https://www.youtube.com/@TuViZa_Anim3Vault/shorts" style="color: #fff; text-decoration: underline;">Shorts Playlist</a></p>
+</section>
+
+<section id="donghua">
+  <h2>Donghua Section</h2>
+  <p>Latest Donghua uploads from your playlist.</p>
+  <iframe src="https://www.youtube.com/embed/videoseries?list=PLbTlJpronU8_GMDGyQlawguePVZVNnxNO"></iframe>
+</section>
+
+<section id="news">
+  <h2>New$ Section</h2>
+  <p>Updates and announcements related to Anim3Vault.</p>
+  <iframe src="https://www.youtube.com/embed/videoseries?list=PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae"></iframe>
+</section>
+
+<script>
+  function setActive(el) {
+    document.querySelectorAll('.nav-buttons a').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
