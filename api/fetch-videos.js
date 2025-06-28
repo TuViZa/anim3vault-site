@@ -1,11 +1,7 @@
-import fetch from 'node-fetch';
-
 const API_KEY = process.env.YT_API_KEY;
-
 const PLAYLISTS = {
   donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
-  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae",
-  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk"
+  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae"
 };
 
 const DONGHUA_TITLES = [
@@ -18,86 +14,53 @@ const DONGHUA_TITLES = [
   "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
 ];
 
-function isValid(video) {
-  return (
-    video?.snippet &&
-    video.snippet.title &&
-    !video.snippet.title.toLowerCase().includes("deleted") &&
-    !video.snippet.title.toLowerCase().includes("private") &&
-    video.snippet.resourceId?.videoId
-  );
-}
-
-function matchTitle(title, keyword) {
+function titleMatches(title, keyword) {
   return title.toLowerCase().includes(keyword.toLowerCase());
 }
 
 export default async function handler(req, res) {
-  const { type = "donghua", pageToken = "" } = req.query;
+  const { type = "donghua" } = req.query;
   const playlistId = PLAYLISTS[type];
+  if (!playlistId) return res.status(400).json({ error: 'Invalid playlist type.' });
 
-  if (!API_KEY) {
-    return res.status(500).json({ error: "Missing YouTube API key." });
-  }
-
-  if (!playlistId) {
-    return res.status(400).json({ error: "Invalid playlist type." });
-  }
-
+  let items = [], pageToken = '';
   try {
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`;
-    const ytRes = await fetch(url);
-    const json = await ytRes.json();
+    do {
+      const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
+      const data = await ytRes.json();
+      if (!data.items) break;
+      items.push(...data.items);
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
 
-    if (!ytRes.ok || !json.items) {
-      console.error("YouTube API error response:", json);
-      return res.status(500).json({ error: "YouTube API Error", details: json });
-    }
-
-    const items = json.items.filter(isValid);
-    const nextPage = json.nextPageToken || null;
-    const seen = new Set();
-
-    if (type === "anim3" || type === "news") {
-      const mixed = items.filter((item) => {
-        const id = item.snippet.resourceId.videoId;
-        if (seen.has(id)) return false;
-        seen.add(id);
-        return true;
-      });
-      return res.status(200).json({ mixed, nextPage });
-    }
-
-    // For donghua: group using keywords
+    const addedIds = new Set();
     const grouped = {};
     const mixed = [];
 
-    for (const keyword of DONGHUA_TITLES) grouped[keyword] = [];
+    for (let keyword of DONGHUA_TITLES) {
+      grouped[keyword] = [];
+    }
 
-    for (const item of items) {
-      const title = item.snippet.title;
-      const id = item.snippet.resourceId.videoId;
+    for (let v of items) {
+      const title = v.snippet?.title || "";
+      const id = v.snippet?.resourceId?.videoId;
+      if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
-      if (seen.has(id)) continue;
-      seen.add(id);
-
-      let groupedMatch = false;
-      for (const keyword of DONGHUA_TITLES) {
-        if (matchTitle(title, keyword)) {
-          grouped[keyword].push(item);
-          groupedMatch = true;
+      let matched = false;
+      for (let keyword of DONGHUA_TITLES) {
+        if (titleMatches(title, keyword)) {
+          grouped[keyword].push(v);
+          matched = true;
           break;
         }
       }
-
-      if (!groupedMatch) {
-        mixed.push(item);
-      }
+      if (!matched) mixed.push(v);
+      addedIds.add(id);
     }
 
-    return res.status(200).json({ grouped, mixed, nextPage });
-  } catch (err) {
-    console.error("API fetch error:", err);
-    return res.status(500).json({ error: "Failed to fetch videos." });
+    return res.status(200).json({ grouped, mixed });
+  } catch (e) {
+    console.error("Fetch error:", e);
+    return res.status(500).json({ error: e.message });
   }
 }
