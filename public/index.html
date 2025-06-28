@@ -36,8 +36,16 @@
     }
 
     async function fetchVideos(type) {
-      const res = await fetch(`/api/fetch-videos?type=${type}`);
-      return await res.json();
+      try {
+        const res = await fetch(`/api/fetch-videos?type=${type}`);
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+        return await res.json();
+      } catch (error) {
+        console.error("Failed to fetch videos:", error);
+        return { grouped: {}, mixed: [] };
+      }
     }
 
     function createCard(video) {
@@ -96,6 +104,7 @@
           container.appendChild(row);
         }
       } catch (err) {
+        console.error("Group Load Error:", err);
         loading.textContent = "Failed to load videos.";
       }
     }
@@ -118,6 +127,7 @@
         });
         container.appendChild(row);
       } catch (err) {
+        console.error("Flat Load Error:", err);
         loading.textContent = "Failed to load videos.";
       }
     }
