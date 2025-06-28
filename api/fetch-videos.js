@@ -1,11 +1,9 @@
-// api/fetch-videos.js
-import fetch from 'node-fetch';
-
 const API_KEY = process.env.YT_API_KEY;
 const PLAYLISTS = {
   donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
   news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae"
 };
+
 const DONGHUA_TITLES = [
   "Unusual News from the City of sky", "Heaven swallow", "Wukong", "Against the sky supreme",
   "Supreme god emperor", "Swallowed star", "Stellar transformations", "My senior brother is too strong",
@@ -62,6 +60,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ grouped, mixed });
   } catch (e) {
+    console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
   }
 }
