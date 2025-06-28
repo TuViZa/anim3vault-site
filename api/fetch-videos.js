@@ -1,19 +1,67 @@
 // api/fetch-videos.js
+import fetch from 'node-fetch';
+
+const API_KEY = process.env.YT_API_KEY;
+const PLAYLISTS = {
+  donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
+  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae"
+};
+const DONGHUA_TITLES = [
+  "Unusual News from the City of sky", "Heaven swallow", "Wukong", "Against the sky supreme",
+  "Supreme god emperor", "Swallowed star", "Stellar transformations", "My senior brother is too strong",
+  "Ten thousand worlds", "One hundred thousand years of Qi Training", "Martial master",
+  "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "The immortal Doctor in Modern City",
+  "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect worlds",
+  "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
+  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
+];
+
+function titleMatches(title, keyword) {
+  return title.toLowerCase().includes(keyword.toLowerCase());
+}
+
 export default async function handler(req, res) {
-  const API_KEY = process.env.YT_API_KEY;
-  const playlistId = req.query.playlistId;
-  const maxResults = req.query.maxResults || 20;
+  const { type = "donghua" } = req.query;
+  const playlistId = PLAYLISTS[type];
+  if (!playlistId) return res.status(400).json({ error: 'Invalid playlist type.' });
 
-  const url =
-    `https://www.googleapis.com/youtube/v3/playlistItems` +
-    `?part=snippet&playlistId=${playlistId}` +
-    `&maxResults=${maxResults}&key=${API_KEY}`;
-
+  let items = [], pageToken = '';
   try {
-    const response = await fetch(url);
-    const data = await response.json();
-    res.status(200).json(data);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch videos' });
+    do {
+      const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
+      const data = await ytRes.json();
+      if (!data.items) break;
+      items.push(...data.items);
+      pageToken = data.nextPageToken || '';
+    } while (pageToken);
+
+    const addedIds = new Set();
+    const grouped = {};
+    const mixed = [];
+
+    for (let keyword of DONGHUA_TITLES) {
+      grouped[keyword] = [];
+    }
+
+    for (let v of items) {
+      const title = v.snippet?.title || "";
+      const id = v.snippet?.resourceId?.videoId;
+      if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
+
+      let matched = false;
+      for (let keyword of DONGHUA_TITLES) {
+        if (titleMatches(title, keyword)) {
+          grouped[keyword].push(v);
+          matched = true;
+          break;
+        }
+      }
+      if (!matched) mixed.push(v);
+      addedIds.add(id);
+    }
+
+    return res.status(200).json({ grouped, mixed });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
   }
 }
