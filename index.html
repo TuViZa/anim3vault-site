@@ -95,11 +95,9 @@
     el.classList.add('active');
   }
 
-  const apiKey = 'AIzaSyDtENsqNq0pk-RLCFR73hLWL8OrA7FbJlo';
-
   async function loadPlaylist(playlistId, containerId) {
     const container = document.getElementById(containerId);
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=20&key=${apiKey}`;
+    const url = `/api/fetch-videos?playlistId=${playlistId}&maxResults=20`;
     try {
       const res = await fetch(url);
       const data = await res.json();
@@ -111,7 +109,7 @@
         container.appendChild(iframe);
       });
     } catch (err) {
-      container.innerHTML = "<p>Failed to load videos.</p>";
+      container.innerHTML = "<p>Failed to load videos. Try again later.</p>";
     }
   }
 
@@ -122,4 +120,3 @@
 
 </body>
 </html>
-
