@@ -139,6 +139,17 @@
 </div>
 
 <script>
+const DONGHUA_TITLES = [
+  "Battle through the heavens", "Swallowed star", "Perfect worlds", "Stellar transformations",
+  "Soul land 2", "Shrouding The Heavens", "A will eternal", "Renegade immortal",
+  "Immortal ascension", "Spirit sword sovereign", "Supreme god emperor", "Wukong", "Peerless soul",
+  "Martial master", "Throne of seal", "Heaven swallow", "The immortal Doctor in Modern City",
+  "Ten thousand worlds", "My senior brother is too strong", "Strongest upgrade",
+  "Against the sky supreme", "Laid off demon", "Unusual News from the City of sky",
+  "Jade dynasty", "Embers", "The all devouring whale", "Tales of herding gods",
+  "One hundred thousand years of Qi Training"
+];
+
 function showScreen(screenId, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
@@ -147,37 +158,19 @@ function showScreen(screenId, btn) {
 }
 
 async function fetchAllVideos(playlistId) {
-  let items = [];
-  let pageToken = '';
-  let attempts = 0;
+  let items = [], pageToken = '';
   do {
     const res = await fetch(`/api/fetch-videos?playlistId=${playlistId}&maxResults=50&pageToken=${pageToken}`);
     const data = await res.json();
     if (!data.items) break;
     items.push(...data.items);
     pageToken = data.nextPageToken || '';
-    attempts++;
-  } while (pageToken && attempts < 10);
+  } while (pageToken);
   return items.filter(v => v.snippet && !v.snippet.title.toLowerCase().includes("deleted") && !v.snippet.title.toLowerCase().includes("private"));
 }
 
-async function loadFlatPlaylist(playlistId, containerId, loadingId) {
-  const container = document.getElementById(containerId);
-  const loading = document.getElementById(loadingId);
-  loading.textContent = "Loading...";
-  const videos = await fetchAllVideos(playlistId);
-  loading.style.display = "none";
-
-  for (let v of videos) {
-    const card = document.createElement("div");
-    card.className = "video-card";
-    card.innerHTML = `
-      <div class="video-thumb">
-        <iframe src="https://www.youtube.com/embed/${v.snippet.resourceId.videoId}" allowfullscreen></iframe>
-      </div>
-      <div class="video-title">${v.snippet.title}</div>`;
-    container.appendChild(card);
-  }
+function findMatchedGroup(title) {
+  return DONGHUA_TITLES.find(group => title.toLowerCase().includes(group.toLowerCase())) || null;
 }
 
 async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
@@ -186,43 +179,65 @@ async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
   loading.textContent = "Loading...";
   const videos = await fetchAllVideos(playlistId);
   loading.style.display = "none";
-
+  const addedIds = new Set();
   const groups = {};
   for (let v of videos) {
     const title = v.snippet.title;
-    const base = title.split(" ").slice(0, 4).join(" ").toLowerCase();
-    if (!groups[base]) groups[base] = [];
-    groups[base].push(v);
+    const videoId = v.snippet.resourceId.videoId;
+    if (addedIds.has(videoId)) continue;
+    const groupKey = findMatchedGroup(title);
+    if (!groupKey) continue;
+    if (!groups[groupKey]) groups[groupKey] = [];
+    groups[groupKey].push({ title, videoId });
+    addedIds.add(videoId);
   }
-
-  Object.keys(groups).forEach(key => {
+  Object.entries(groups).forEach(([groupName, vids]) => {
     const heading = document.createElement("div");
     heading.className = "group-heading";
-    heading.textContent = key;
+    heading.textContent = groupName;
     container.appendChild(heading);
-
     const row = document.createElement("div");
     row.className = "scroll-row";
-
-    groups[key].forEach(v => {
+    vids.forEach(({ title, videoId }) => {
       const card = document.createElement("div");
       card.className = "video-card";
       card.innerHTML = `
         <div class="video-thumb">
-          <iframe src="https://www.youtube.com/embed/${v.snippet.resourceId.videoId}" allowfullscreen></iframe>
+          <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
         </div>
-        <div class="video-title">${v.snippet.title}</div>`;
+        <div class="video-title">${title}</div>`;
       row.appendChild(card);
     });
-
     container.appendChild(row);
   });
 }
 
-// Playlist IDs (replace with your own if needed)
+async function loadFlatPlaylist(playlistId, containerId, loadingId) {
+  const container = document.getElementById(containerId);
+  const loading = document.getElementById(loadingId);
+  loading.textContent = "Loading...";
+  const videos = await fetchAllVideos(playlistId);
+  loading.style.display = "none";
+  const added = new Set();
+  videos.forEach(v => {
+    const videoId = v.snippet.resourceId.videoId;
+    if (added.has(videoId)) return;
+    added.add(videoId);
+    const title = v.snippet.title;
+    const card = document.createElement("div");
+    card.className = "video-card";
+    card.innerHTML = `
+      <div class="video-thumb">
+        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+      </div>
+      <div class="video-title">${title}</div>`;
+    container.appendChild(card);
+  });
+}
+
 loadFlatPlaylist("PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk", "anim3-videos", "anim3-loading");
 loadGroupedPlaylist("PLbTlJpronU8_GMDGyQlawguePVZVNnxNO", "donghua-videos", "donghua-loading");
-loadGroupedPlaylist("PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae", "news-videos", "news-loading");
+loadFlatPlaylist("PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae", "news-videos", "news-loading");
 </script>
 
 </body>
