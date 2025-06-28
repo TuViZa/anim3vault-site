@@ -51,11 +51,6 @@
     #donghua { background: #ff00ff; }
     #news { background: #8b0000; }
 
-    .video-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
-    }
     .scroll-row {
       display: flex;
       overflow-x: auto;
@@ -125,7 +120,7 @@
 
 <div id="anim3" class="screen active">
   <div id="anim3-loading" class="loading">Loading Anim3 videos...</div>
-  <div class="video-grid" id="anim3-videos"></div>
+  <div id="anim3-videos"></div>
 </div>
 
 <div id="donghua" class="screen">
@@ -140,14 +135,13 @@
 
 <script>
 const DONGHUA_TITLES = [
-  "Battle through the heavens", "Swallowed star", "Perfect worlds", "Stellar transformations",
-  "Soul land 2", "Shrouding The Heavens", "A will eternal", "Renegade immortal",
-  "Immortal ascension", "Spirit sword sovereign", "Supreme god emperor", "Wukong", "Peerless soul",
-  "Martial master", "Throne of seal", "Heaven swallow", "The immortal Doctor in Modern City",
-  "Ten thousand worlds", "My senior brother is too strong", "Strongest upgrade",
-  "Against the sky supreme", "Laid off demon", "Unusual News from the City of sky",
-  "Jade dynasty", "Embers", "The all devouring whale", "Tales of herding gods",
-  "One hundred thousand years of Qi Training"
+  "Unusual News from the City of sky", "Heaven swallow", "Wukong", "Against the sky supreme",
+  "Supreme god emperor", "Swallowed star", "Stellar transformations", "My senior brother is too strong",
+  "Ten thousand worlds", "One hundred thousand years of Qi Training", "Martial master",
+  "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "The immortal Doctor in Modern City",
+  "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect world",
+  "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
+  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
 ];
 
 function showScreen(screenId, btn) {
@@ -169,8 +163,8 @@ async function fetchAllVideos(playlistId) {
   return items.filter(v => v.snippet && !v.snippet.title.toLowerCase().includes("deleted") && !v.snippet.title.toLowerCase().includes("private"));
 }
 
-function findMatchedGroup(title) {
-  return DONGHUA_TITLES.find(group => title.toLowerCase().includes(group.toLowerCase())) || null;
+function titleMatches(title, keyword) {
+  return title.toLowerCase().includes(keyword.toLowerCase());
 }
 
 async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
@@ -179,26 +173,28 @@ async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
   loading.textContent = "Loading...";
   const videos = await fetchAllVideos(playlistId);
   loading.style.display = "none";
+
   const addedIds = new Set();
-  const groups = {};
-  for (let v of videos) {
-    const title = v.snippet.title;
-    const videoId = v.snippet.resourceId.videoId;
-    if (addedIds.has(videoId)) continue;
-    const groupKey = findMatchedGroup(title);
-    if (!groupKey) continue;
-    if (!groups[groupKey]) groups[groupKey] = [];
-    groups[groupKey].push({ title, videoId });
-    addedIds.add(videoId);
-  }
-  Object.entries(groups).forEach(([groupName, vids]) => {
+  const unmatchedVideos = [];
+
+  for (let keyword of DONGHUA_TITLES) {
+    const matchedVideos = videos.filter(v => titleMatches(v.snippet.title, keyword));
+    if (matchedVideos.length === 0) continue;
+
     const heading = document.createElement("div");
     heading.className = "group-heading";
-    heading.textContent = groupName;
+    heading.textContent = keyword;
     container.appendChild(heading);
+
     const row = document.createElement("div");
     row.className = "scroll-row";
-    vids.forEach(({ title, videoId }) => {
+
+    for (let v of matchedVideos) {
+      const title = v.snippet.title;
+      const videoId = v.snippet.resourceId.videoId;
+      if (addedIds.has(videoId)) continue;
+      addedIds.add(videoId);
+
       const card = document.createElement("div");
       card.className = "video-card";
       card.innerHTML = `
@@ -207,9 +203,41 @@ async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
         </div>
         <div class="video-title">${title}</div>`;
       row.appendChild(card);
-    });
+    }
     container.appendChild(row);
-  });
+  }
+
+  for (let v of videos) {
+    const title = v.snippet.title;
+    const videoId = v.snippet.resourceId.videoId;
+    if (addedIds.has(videoId)) continue;
+    unmatchedVideos.push(v);
+    addedIds.add(videoId);
+  }
+
+  if (unmatchedVideos.length > 0) {
+    const heading = document.createElement("div");
+    heading.className = "group-heading";
+    heading.textContent = "Mixed";
+    container.appendChild(heading);
+
+    const row = document.createElement("div");
+    row.className = "scroll-row";
+
+    for (let v of unmatchedVideos) {
+      const title = v.snippet.title;
+      const videoId = v.snippet.resourceId.videoId;
+      const card = document.createElement("div");
+      card.className = "video-card";
+      card.innerHTML = `
+        <div class="video-thumb">
+          <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
+        </div>
+        <div class="video-title">${title}</div>`;
+      row.appendChild(card);
+    }
+    container.appendChild(row);
+  }
 }
 
 async function loadFlatPlaylist(playlistId, containerId, loadingId) {
