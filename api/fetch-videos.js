@@ -1,5 +1,3 @@
-// pages/api/fetch-videos.js
-
 import fetch from 'node-fetch';
 
 const API_KEY = process.env.YT_API_KEY;
@@ -20,17 +18,27 @@ const DONGHUA_TITLES = [
   "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
 ];
 
-const isValid = (v) =>
-  v?.snippet?.title &&
-  !v.snippet.title.toLowerCase().includes("deleted") &&
-  !v.snippet.title.toLowerCase().includes("private") &&
-  v.snippet.resourceId?.videoId;
+function isValid(video) {
+  return (
+    video?.snippet &&
+    video.snippet.title &&
+    !video.snippet.title.toLowerCase().includes("deleted") &&
+    !video.snippet.title.toLowerCase().includes("private") &&
+    video.snippet.resourceId?.videoId
+  );
+}
 
-const matchTitle = (title, keyword) => title.toLowerCase().includes(keyword.toLowerCase());
+function matchTitle(title, keyword) {
+  return title.toLowerCase().includes(keyword.toLowerCase());
+}
 
 export default async function handler(req, res) {
-  const { type = 'donghua', pageToken = '' } = req.query;
+  const { type = "donghua", pageToken = "" } = req.query;
   const playlistId = PLAYLISTS[type];
+
+  if (!API_KEY) {
+    return res.status(500).json({ error: "Missing YouTube API key." });
+  }
 
   if (!playlistId) {
     return res.status(400).json({ error: "Invalid playlist type." });
@@ -42,45 +50,49 @@ export default async function handler(req, res) {
     const json = await ytRes.json();
 
     if (!ytRes.ok || !json.items) {
+      console.error("YouTube API error response:", json);
       return res.status(500).json({ error: "YouTube API Error", details: json });
     }
 
     const items = json.items.filter(isValid);
     const nextPage = json.nextPageToken || null;
-    const added = new Set();
+    const seen = new Set();
 
     if (type === "anim3" || type === "news") {
-      const unique = items.filter(v => {
-        const id = v.snippet.resourceId.videoId;
-        if (added.has(id)) return false;
-        added.add(id);
+      const mixed = items.filter((item) => {
+        const id = item.snippet.resourceId.videoId;
+        if (seen.has(id)) return false;
+        seen.add(id);
         return true;
       });
-      return res.status(200).json({ mixed: unique, nextPage });
+      return res.status(200).json({ mixed, nextPage });
     }
 
-    // For donghua: group based on predefined titles
+    // For donghua: group using keywords
     const grouped = {};
     const mixed = [];
 
     for (const keyword of DONGHUA_TITLES) grouped[keyword] = [];
 
-    for (const v of items) {
-      const id = v.snippet.resourceId.videoId;
-      const title = v.snippet.title;
-      if (added.has(id)) continue;
+    for (const item of items) {
+      const title = item.snippet.title;
+      const id = item.snippet.resourceId.videoId;
 
-      let addedToGroup = false;
+      if (seen.has(id)) continue;
+      seen.add(id);
+
+      let groupedMatch = false;
       for (const keyword of DONGHUA_TITLES) {
         if (matchTitle(title, keyword)) {
-          grouped[keyword].push(v);
-          addedToGroup = true;
+          grouped[keyword].push(item);
+          groupedMatch = true;
           break;
         }
       }
 
-      if (!addedToGroup) mixed.push(v);
-      added.add(id);
+      if (!groupedMatch) {
+        mixed.push(item);
+      }
     }
 
     return res.status(200).json({ grouped, mixed, nextPage });
