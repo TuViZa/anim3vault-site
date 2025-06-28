@@ -20,9 +20,9 @@ const DONGHUA_TITLES = [
 
 const isValid = (v) =>
   v?.snippet?.title &&
+  v?.snippet?.resourceId?.videoId &&
   !v.snippet.title.toLowerCase().includes("deleted") &&
-  !v.snippet.title.toLowerCase().includes("private") &&
-  v.snippet.resourceId?.videoId;
+  !v.snippet.title.toLowerCase().includes("private");
 
 const matchTitle = (title, keyword) => title.toLowerCase().includes(keyword.toLowerCase());
 
@@ -34,33 +34,33 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid playlist type." });
   }
 
-  const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`;
+  const apiURL = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`;
 
   try {
-    const ytRes = await fetch(url);
+    const ytRes = await fetch(apiURL);
     const data = await ytRes.json();
 
-    if (!ytRes.ok || !data.items) {
-      console.error("YouTube API error:", data);
-      return res.status(500).json({ error: "YouTube API error", details: data });
+    if (!ytRes.ok || !Array.isArray(data.items)) {
+      console.error("YouTube API Error:", data);
+      return res.status(500).json({ error: "YouTube API Error", details: data });
     }
 
     const items = data.items.filter(isValid);
     const nextPage = data.nextPageToken || null;
+
     const seen = new Set();
 
-    // For flat lists (anim3, news)
-    if (type === 'anim3' || type === 'news') {
-      const unique = items.filter(v => {
+    if (type === "anim3" || type === "news") {
+      const mixed = items.filter(v => {
         const id = v.snippet.resourceId.videoId;
         if (seen.has(id)) return false;
         seen.add(id);
         return true;
       });
-      return res.status(200).json({ mixed: unique, nextPage });
+      return res.status(200).json({ mixed, nextPage });
     }
 
-    // For grouped list (donghua)
+    // Grouped response for donghua
     const grouped = {};
     const mixed = [];
 
@@ -71,21 +71,23 @@ export default async function handler(req, res) {
       const title = v.snippet.title;
       if (seen.has(id)) continue;
 
-      let matched = false;
+      let addedToGroup = false;
       for (let keyword of DONGHUA_TITLES) {
         if (matchTitle(title, keyword)) {
           grouped[keyword].push(v);
-          matched = true;
+          addedToGroup = true;
           break;
         }
       }
-      if (!matched) mixed.push(v);
+
+      if (!addedToGroup) mixed.push(v);
       seen.add(id);
     }
 
     return res.status(200).json({ grouped, mixed, nextPage });
+
   } catch (err) {
-    console.error("Server error:", err);
-    return res.status(500).json({ error: "Failed to fetch videos." });
+    console.error("API Fetch Exception:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
