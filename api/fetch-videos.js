@@ -25,75 +25,77 @@ function matchTitle(title, keyword) {
 async function fetchAllVideos(playlistId) {
   const results = [];
   let nextPage = '';
-  while (true) {
-    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${nextPage}&key=${API_KEY}`;
-    const res = await fetch(url);
-    const json = await res.json();
+  try {
+    while (true) {
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${nextPage}&key=${API_KEY}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error?.message || "YouTube API error");
+      }
+      const json = await res.json();
+      if (!json.items) break;
+      results.push(...json.items);
+      if (!json.nextPageToken) break;
+      nextPage = json.nextPageToken;
+    }
 
-    if (!json.items) break;
-    results.push(...json.items);
-    if (!json.nextPageToken) break;
-    nextPage = json.nextPageToken;
+    return results.filter(v =>
+      v.snippet &&
+      v.snippet.title &&
+      v.snippet.resourceId?.videoId &&
+      !v.snippet.title.toLowerCase().includes("deleted") &&
+      !v.snippet.title.toLowerCase().includes("private")
+    );
+  } catch (err) {
+    console.error("YouTube Fetch Error:", err.message);
+    return null;
   }
-
-  return results.filter(v =>
-    v.snippet &&
-    v.snippet.title &&
-    v.snippet.resourceId?.videoId &&
-    !v.snippet.title.toLowerCase().includes("deleted") &&
-    !v.snippet.title.toLowerCase().includes("private")
-  );
 }
 
 export default async function handler(req, res) {
-  try {
-    const { type = 'donghua' } = req.query;
-    const playlistId = PLAYLISTS[type];
-    if (!playlistId) return res.status(400).json({ error: "Invalid playlist type" });
+  const { type = 'donghua' } = req.query;
+  const playlistId = PLAYLISTS[type];
 
-    const allVideos = await fetchAllVideos(playlistId);
-    const added = new Set();
+  if (!playlistId) return res.status(400).json({ error: "Invalid playlist type." });
 
-    // For flat playlists like "anim3"
-    if (type === 'anim3') {
-      const unique = allVideos.filter(v => {
-        const id = v.snippet.resourceId.videoId;
-        if (added.has(id)) return false;
-        added.add(id);
-        return true;
-      });
-      return res.status(200).json({ mixed: unique });
-    }
+  const videos = await fetchAllVideos(playlistId);
+  if (!videos) return res.status(500).json({ error: "Failed to fetch videos from YouTube API." });
 
-    // For grouped playlists like "donghua" or "news"
-    const grouped = {};
-    const mixed = [];
+  const added = new Set();
 
-    for (let title of DONGHUA_TITLES) {
-      grouped[title] = [];
-    }
-
-    for (let v of allVideos) {
+  if (type === 'anim3') {
+    const unique = videos.filter(v => {
       const id = v.snippet.resourceId.videoId;
-      const title = v.snippet.title;
-      if (added.has(id)) continue;
-
-      let matched = false;
-      for (let groupTitle of DONGHUA_TITLES) {
-        if (matchTitle(title, groupTitle)) {
-          grouped[groupTitle].push(v);
-          matched = true;
-          break;
-        }
-      }
-
-      if (!matched) mixed.push(v);
+      if (added.has(id)) return false;
       added.add(id);
+      return true;
+    });
+    return res.status(200).json({ mixed: unique });
+  }
+
+  const grouped = {};
+  const mixed = [];
+
+  for (let title of DONGHUA_TITLES) grouped[title] = [];
+
+  for (let v of videos) {
+    const id = v.snippet.resourceId.videoId;
+    const title = v.snippet.title;
+    if (added.has(id)) continue;
+
+    let matched = false;
+    for (let keyword of DONGHUA_TITLES) {
+      if (matchTitle(title, keyword)) {
+        grouped[keyword].push(v);
+        matched = true;
+        break;
+      }
     }
 
-    return res.status(200).json({ grouped, mixed });
-  } catch (err) {
-    console.error("API Error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    if (!matched) mixed.push(v);
+    added.add(id);
   }
+
+  return res.status(200).json({ grouped, mixed });
 }
