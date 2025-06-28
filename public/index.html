@@ -38,88 +38,98 @@
     async function fetchVideos(type) {
       try {
         const res = await fetch(`/api/fetch-videos?type=${type}`);
-        if (!res.ok) throw new Error(`Status ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
         return await res.json();
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Failed to fetch videos:", error);
         return { grouped: {}, mixed: [] };
       }
     }
 
     function createCard(video) {
-      const id = video.snippet.resourceId.videoId;
-      const title = video.snippet.title;
-      const card = document.createElement("div");
-      card.className = "video-card";
+      const card = document.createElement('div');
+      card.className = 'video-card';
+      const vid = video.snippet.resourceId.videoId;
       card.innerHTML = `
         <div class="video-thumb">
-          <iframe src="https://www.youtube.com/embed/${id}" loading="lazy" allowfullscreen></iframe>
+          <iframe src="https://www.youtube.com/embed/${vid}" loading="lazy" allowfullscreen></iframe>
         </div>
-        <div class="video-title">${title}</div>
+        <div class="video-title">${video.snippet.title}</div>
       `;
       return card;
     }
 
-    async function loadGrouped(type, containerId) {
+    async function loadGrouped(section, containerId) {
       const container = document.getElementById(containerId);
       const loading = container.previousElementSibling;
       loading.textContent = "Loading...";
-      const data = await fetchVideos(type);
-      loading.style.display = "none";
+      try {
+        const data = await fetchVideos(section);
+        loading.style.display = 'none';
+        const used = new Set();
 
-      const added = new Set();
-      const allGroups = Object.entries(data.grouped || {});
+        for (const group of Object.keys(data.grouped).sort()) {
+          const videos = data.grouped[group].filter(v => !used.has(v.snippet.resourceId.videoId));
+          if (!videos.length) continue;
+          const heading = document.createElement('div');
+          heading.className = 'group-heading';
+          heading.textContent = group;
 
-      for (const [groupName, vids] of allGroups) {
-        const filtered = vids.filter(v => !added.has(v.snippet.resourceId.videoId));
-        if (!filtered.length) continue;
+          const row = document.createElement('div');
+          row.className = 'scroll-row';
 
-        const heading = document.createElement("div");
-        heading.className = "group-heading";
-        heading.textContent = groupName;
-        container.appendChild(heading);
+          videos.forEach(v => {
+            row.appendChild(createCard(v));
+            used.add(v.snippet.resourceId.videoId);
+          });
 
-        const row = document.createElement("div");
-        row.className = "scroll-row";
-        filtered.forEach(v => {
-          row.appendChild(createCard(v));
-          added.add(v.snippet.resourceId.videoId);
-        });
-        container.appendChild(row);
-      }
+          container.appendChild(heading);
+          container.appendChild(row);
+        }
 
-      if (data.mixed && data.mixed.length) {
-        const heading = document.createElement("div");
-        heading.className = "group-heading";
-        heading.textContent = "Mixed";
-        const row = document.createElement("div");
-        row.className = "scroll-row";
-        data.mixed.filter(v => !added.has(v.snippet.resourceId.videoId)).forEach(v => {
-          row.appendChild(createCard(v));
-          added.add(v.snippet.resourceId.videoId);
-        });
-        container.appendChild(heading);
-        container.appendChild(row);
+        if (data.mixed && data.mixed.length) {
+          const heading = document.createElement('div');
+          heading.className = 'group-heading';
+          heading.textContent = 'Mixed';
+
+          const row = document.createElement('div');
+          row.className = 'scroll-row';
+          data.mixed.filter(v => !used.has(v.snippet.resourceId.videoId)).forEach(v => {
+            row.appendChild(createCard(v));
+            used.add(v.snippet.resourceId.videoId);
+          });
+          container.appendChild(heading);
+          container.appendChild(row);
+        }
+      } catch (err) {
+        console.error("Group Load Error:", err);
+        loading.textContent = "Failed to load videos.";
       }
     }
 
-    async function loadFlat(type, containerId) {
+    async function loadFlat(section, containerId) {
       const container = document.getElementById(containerId);
       const loading = container.previousElementSibling;
       loading.textContent = "Loading...";
-      const data = await fetchVideos(type);
-      loading.style.display = "none";
-
-      const used = new Set();
-      const row = document.createElement("div");
-      row.className = "scroll-row";
-      data.mixed.forEach(v => {
-        const id = v.snippet.resourceId.videoId;
-        if (used.has(id)) return;
-        used.add(id);
-        row.appendChild(createCard(v));
-      });
-      container.appendChild(row);
+      try {
+        const data = await fetchVideos(section);
+        loading.style.display = 'none';
+        const used = new Set();
+        const row = document.createElement('div');
+        row.className = 'scroll-row';
+        data.mixed.forEach(v => {
+          const id = v.snippet.resourceId.videoId;
+          if (used.has(id)) return;
+          used.add(id);
+          row.appendChild(createCard(v));
+        });
+        container.appendChild(row);
+      } catch (err) {
+        console.error("Flat Load Error:", err);
+        loading.textContent = "Failed to load videos.";
+      }
     }
 
     loadFlat("anim3", "anim3-videos");
