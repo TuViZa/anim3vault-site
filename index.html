@@ -4,269 +4,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anim3Vault</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #000;
-      color: white;
-      overflow-x: hidden;
-    }
-    header {
-      background: #111;
-      text-align: center;
-      padding: 20px;
-      font-size: 2em;
-      font-weight: bold;
-    }
-    .nav-buttons {
-      display: flex;
-      justify-content: center;
-      background: #222;
-      flex-wrap: wrap;
-    }
-    .nav-buttons a {
-      color: white;
-      padding: 10px 15px;
-      margin: 5px;
-      text-decoration: none;
-      background: #444;
-      border-radius: 8px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-    .nav-buttons a.active {
-      background: #f0f;
-      color: black;
-    }
-    .screen {
-      display: none;
-      padding: 10px;
-      min-height: calc(100vh - 130px);
-    }
-    .screen.active {
-      display: block;
-    }
-    #anim3 { background: #32174d; }
-    #donghua { background: #ff00ff; }
-    #news { background: #8b0000; }
-
-    .scroll-row {
-      display: flex;
-      overflow-x: auto;
-      gap: 16px;
-      scroll-snap-type: x mandatory;
-      padding-bottom: 10px;
-    }
-    .scroll-row::-webkit-scrollbar {
-      height: 6px;
-    }
-    .scroll-row::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
-    }
-    .scroll-row::-webkit-scrollbar-track {
-      background: #222;
-    }
-    .video-card {
-      background: #1a1a1a;
-      border-radius: 10px;
-      overflow: hidden;
-      flex: 0 0 auto;
-      width: 280px;
-      scroll-snap-align: start;
-    }
-    .video-thumb {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%;
-      background: #000;
-    }
-    .video-thumb iframe {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .video-title {
-      padding: 10px;
-      font-size: 0.95em;
-      text-align: center;
-    }
-    .loading {
-      text-align: center;
-      padding: 20px;
-      font-size: 1.2em;
-    }
-    .group-heading {
-      font-size: 1.3em;
-      font-weight: bold;
-      margin: 20px 0 5px;
-      padding-left: 5px;
-      text-transform: capitalize;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <header>Anim3Vault</header>
+  <div class="nav-buttons">
+    <a class="btn active" onclick="showScreen('anim3', this)">Anim3</a>
+    <a class="btn" onclick="showScreen('donghua', this)">Donghu@</a>
+    <a class="btn" onclick="showScreen('news', this)">New$</a>
+  </div>
 
-<header>Anim3Vault</header>
+  <div id="anim3" class="screen active">
+    <div class="loading">Coming soon...</div>
+  </div>
+  <div id="donghua" class="screen">
+    <div class="loading">Loading Donghua...</div>
+  </div>
+  <div id="news" class="screen">
+    <div class="loading">Loading News...</div>
+  </div>
 
-<div class="nav-buttons">
-  <a class="btn active" onclick="showScreen('anim3', this)">Anim3</a>
-  <a class="btn" onclick="showScreen('donghua', this)">Donghu@</a>
-  <a class="btn" onclick="showScreen('news', this)">New$</a>
-</div>
-
-<div id="anim3" class="screen active">
-  <div id="anim3-loading" class="loading">Loading Anim3 videos...</div>
-  <div id="anim3-videos"></div>
-</div>
-
-<div id="donghua" class="screen">
-  <div id="donghua-loading" class="loading">Loading Donghua videos...</div>
-  <div id="donghua-videos"></div>
-</div>
-
-<div id="news" class="screen">
-  <div id="news-loading" class="loading">Loading News videos...</div>
-  <div id="news-videos"></div>
-</div>
-
-<script>
-const DONGHUA_TITLES = [
-  "Unusual News from the City of sky", "Heaven swallow", "Wukong", "Against the sky supreme",
-  "Supreme god emperor", "Swallowed star", "Stellar transformations", "My senior brother is too strong",
-  "Ten thousand worlds", "One hundred thousand years of Qi Training", "Martial master",
-  "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "The immortal Doctor in Modern City",
-  "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect world",
-  "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
-  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
-];
-
-function showScreen(screenId, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(screenId).classList.add('active');
-  document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-async function fetchAllVideos(playlistId) {
-  let items = [], pageToken = '';
-  do {
-    const res = await fetch(`/api/fetch-videos?playlistId=${playlistId}&maxResults=50&pageToken=${pageToken}`);
-    const data = await res.json();
-    if (!data.items) break;
-    items.push(...data.items);
-    pageToken = data.nextPageToken || '';
-  } while (pageToken);
-  return items.filter(v => v.snippet && !v.snippet.title.toLowerCase().includes("deleted") && !v.snippet.title.toLowerCase().includes("private"));
-}
-
-function titleMatches(title, keyword) {
-  return title.toLowerCase().includes(keyword.toLowerCase());
-}
-
-async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
-  const container = document.getElementById(containerId);
-  const loading = document.getElementById(loadingId);
-  loading.textContent = "Loading...";
-  const videos = await fetchAllVideos(playlistId);
-  loading.style.display = "none";
-
-  const addedIds = new Set();
-  const unmatchedVideos = [];
-
-  for (let keyword of DONGHUA_TITLES) {
-    const matchedVideos = videos.filter(v => titleMatches(v.snippet.title, keyword));
-    if (matchedVideos.length === 0) continue;
-
-    const heading = document.createElement("div");
-    heading.className = "group-heading";
-    heading.textContent = keyword;
-    container.appendChild(heading);
-
-    const row = document.createElement("div");
-    row.className = "scroll-row";
-
-    for (let v of matchedVideos) {
-      const title = v.snippet.title;
-      const videoId = v.snippet.resourceId.videoId;
-      if (addedIds.has(videoId)) continue;
-      addedIds.add(videoId);
-
-      const card = document.createElement("div");
-      card.className = "video-card";
-      card.innerHTML = `
-        <div class="video-thumb">
-          <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-        </div>
-        <div class="video-title">${title}</div>`;
-      row.appendChild(card);
+  <script>
+    function showScreen(screenId, btn) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     }
-    container.appendChild(row);
-  }
 
-  for (let v of videos) {
-    const title = v.snippet.title;
-    const videoId = v.snippet.resourceId.videoId;
-    if (addedIds.has(videoId)) continue;
-    unmatchedVideos.push(v);
-    addedIds.add(videoId);
-  }
+    async function loadSection(section, containerId) {
+      const container = document.getElementById(containerId);
+      const res = await fetch(`/api/fetch-videos?type=${section}`);
+      const data = await res.json();
+      container.innerHTML = '';
 
-  if (unmatchedVideos.length > 0) {
-    const heading = document.createElement("div");
-    heading.className = "group-heading";
-    heading.textContent = "Mixed";
-    container.appendChild(heading);
+      const groupAndAppend = (groupName, videos) => {
+        if (!videos || !videos.length) return;
+        const title = document.createElement('div');
+        title.className = 'group-heading';
+        title.textContent = groupName;
 
-    const row = document.createElement("div");
-    row.className = "scroll-row";
+        const row = document.createElement('div');
+        row.className = 'scroll-row';
 
-    for (let v of unmatchedVideos) {
-      const title = v.snippet.title;
-      const videoId = v.snippet.resourceId.videoId;
-      const card = document.createElement("div");
-      card.className = "video-card";
-      card.innerHTML = `
-        <div class="video-thumb">
-          <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-        </div>
-        <div class="video-title">${title}</div>`;
-      row.appendChild(card);
+        for (let v of videos) {
+          const vid = v.snippet.resourceId.videoId;
+          const card = document.createElement('div');
+          card.className = 'video-card';
+          card.innerHTML = `
+            <div class="video-thumb">
+              <iframe src="https://www.youtube.com/embed/${vid}" allowfullscreen></iframe>
+            </div>
+            <div class="video-title">${v.snippet.title}</div>`;
+          row.appendChild(card);
+        }
+
+        container.appendChild(title);
+        container.appendChild(row);
+      };
+
+      for (const group in data.grouped) {
+        groupAndAppend(group, data.grouped[group]);
+      }
+      groupAndAppend("Mixed", data.mixed);
     }
-    container.appendChild(row);
-  }
-}
 
-async function loadFlatPlaylist(playlistId, containerId, loadingId) {
-  const container = document.getElementById(containerId);
-  const loading = document.getElementById(loadingId);
-  loading.textContent = "Loading...";
-  const videos = await fetchAllVideos(playlistId);
-  loading.style.display = "none";
-  const added = new Set();
-  videos.forEach(v => {
-    const videoId = v.snippet.resourceId.videoId;
-    if (added.has(videoId)) return;
-    added.add(videoId);
-    const title = v.snippet.title;
-    const card = document.createElement("div");
-    card.className = "video-card";
-    card.innerHTML = `
-      <div class="video-thumb">
-        <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-      </div>
-      <div class="video-title">${title}</div>`;
-    container.appendChild(card);
-  });
-}
-
-loadFlatPlaylist("PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk", "anim3-videos", "anim3-loading");
-loadGroupedPlaylist("PLbTlJpronU8_GMDGyQlawguePVZVNnxNO", "donghua-videos", "donghua-loading");
-loadFlatPlaylist("PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae", "news-videos", "news-loading");
-</script>
-
+    loadSection("donghua", "donghua");
+    loadSection("news", "news");
+  </script>
 </body>
 </html>
