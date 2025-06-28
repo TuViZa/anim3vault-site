@@ -17,124 +17,89 @@
   <div id="anim3" class="screen active">
     <div class="loading">Loading Anim3 videos...</div>
     <div class="scroll-row" id="anim3-videos"></div>
+    <button class="load-more" onclick="loadMore('anim3')">Load More</button>
   </div>
+
   <div id="donghua" class="screen">
     <div class="loading">Loading Donghua videos...</div>
     <div id="donghua-videos"></div>
+    <button class="load-more" onclick="loadMore('donghua')">Load More</button>
   </div>
+
   <div id="news" class="screen">
     <div class="loading">Loading News videos...</div>
-    <div id="news-videos"></div>
+    <div id="news-videos" class="vertical-scroll"></div>
+    <button class="load-more" onclick="loadMore('news')">Load More</button>
   </div>
 
   <script>
-    function showScreen(screenId, btn) {
+    const pageTokens = { anim3: '', donghua: '', news: '' };
+
+    function showScreen(id, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
+      document.getElementById(id).classList.add('active');
       document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
 
-    async function fetchVideos(type) {
-      try {
-        const res = await fetch(`/api/fetch-videos?type=${type}`);
-        if (!res.ok) {
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
-        }
-        return await res.json();
-      } catch (error) {
-        console.error("Failed to fetch videos:", error);
-        return { grouped: {}, mixed: [] };
-      }
-    }
-
     function createCard(video) {
-      const card = document.createElement('div');
-      card.className = 'video-card';
       const vid = video.snippet.resourceId.videoId;
-      card.innerHTML = `
+      const div = document.createElement('div');
+      div.className = 'video-card';
+      div.innerHTML = `
         <div class="video-thumb">
           <iframe src="https://www.youtube.com/embed/${vid}" loading="lazy" allowfullscreen></iframe>
         </div>
         <div class="video-title">${video.snippet.title}</div>
       `;
-      return card;
+      return div;
     }
 
-    async function loadGrouped(section, containerId) {
-      const container = document.getElementById(containerId);
-      const loading = container.previousElementSibling;
-      loading.textContent = "Loading...";
-      try {
-        const data = await fetchVideos(section);
-        loading.style.display = 'none';
-        const used = new Set();
+    async function fetchVideos(type) {
+      const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type] || ''}`);
+      return await res.json();
+    }
 
-        for (const group of Object.keys(data.grouped).sort()) {
-          const videos = data.grouped[group].filter(v => !used.has(v.snippet.resourceId.videoId));
-          if (!videos.length) continue;
+    async function loadMore(type) {
+      const data = await fetchVideos(type);
+      pageTokens[type] = data.nextPage || null;
+      const container = document.getElementById(`${type}-videos`);
+
+      if (type === 'donghua') {
+        for (const group in data.grouped) {
+          if (!data.grouped[group].length) continue;
           const heading = document.createElement('div');
           heading.className = 'group-heading';
           heading.textContent = group;
-
           const row = document.createElement('div');
           row.className = 'scroll-row';
-
-          videos.forEach(v => {
-            row.appendChild(createCard(v));
-            used.add(v.snippet.resourceId.videoId);
-          });
-
+          data.grouped[group].forEach(v => row.appendChild(createCard(v)));
           container.appendChild(heading);
           container.appendChild(row);
         }
-
-        if (data.mixed && data.mixed.length) {
+        if (data.mixed.length) {
           const heading = document.createElement('div');
           heading.className = 'group-heading';
           heading.textContent = 'Mixed';
-
           const row = document.createElement('div');
           row.className = 'scroll-row';
-          data.mixed.filter(v => !used.has(v.snippet.resourceId.videoId)).forEach(v => {
-            row.appendChild(createCard(v));
-            used.add(v.snippet.resourceId.videoId);
-          });
+          data.mixed.forEach(v => row.appendChild(createCard(v)));
           container.appendChild(heading);
           container.appendChild(row);
         }
-      } catch (err) {
-        console.error("Group Load Error:", err);
-        loading.textContent = "Failed to load videos.";
-      }
-    }
-
-    async function loadFlat(section, containerId) {
-      const container = document.getElementById(containerId);
-      const loading = container.previousElementSibling;
-      loading.textContent = "Loading...";
-      try {
-        const data = await fetchVideos(section);
-        loading.style.display = 'none';
-        const used = new Set();
+      } else {
         const row = document.createElement('div');
-        row.className = 'scroll-row';
-        data.mixed.forEach(v => {
-          const id = v.snippet.resourceId.videoId;
-          if (used.has(id)) return;
-          used.add(id);
-          row.appendChild(createCard(v));
-        });
+        row.className = type === 'news' ? 'vertical-scroll' : 'scroll-row';
+        data.mixed.forEach(v => row.appendChild(createCard(v)));
         container.appendChild(row);
-      } catch (err) {
-        console.error("Flat Load Error:", err);
-        loading.textContent = "Failed to load videos.";
       }
     }
 
-    loadFlat("anim3", "anim3-videos");
-    loadGrouped("donghua", "donghua-videos");
-    loadGrouped("news", "news-videos");
+    window.onload = () => {
+      loadMore('anim3');
+      loadMore('donghua');
+      loadMore('news');
+    };
   </script>
 </body>
 </html>
