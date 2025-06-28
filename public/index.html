@@ -2,12 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Anim3Vault</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header>Anim3Vault</header>
+  <header>
+    Anim3Vault
+    <div class="auth-buttons">
+      <button id="loginBtn" onclick="toggleAuthForm('login')">Login</button>
+      <button id="signupBtn" onclick="toggleAuthForm('signup')">Signup</button>
+      <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+    </div>
+  </header>
+
+  <div class="auth-form" id="authForm" style="display:none;">
+    <div id="authTitle">Login</div>
+    <input type="text" id="authUsername" placeholder="Username" />
+    <input type="password" id="authPassword" placeholder="Password" />
+    <button onclick="submitAuth()">Submit</button>
+    <div id="authMessage" style="color: red;"></div>
+  </div>
+
   <div class="nav-buttons">
     <a class="btn active" onclick="showScreen('anim3', this)">Anim3</a>
     <a class="btn" onclick="showScreen('donghua', this)">Donghu@</a>
@@ -27,9 +43,8 @@
   <div id="news" class="screen">
     <div class="loading">Loading News videos...</div>
     <div id="news-videos" class="vertical-scroll"></div>
-    <button class="load-more" onclick="loadMore('news')">Load More</button>
+    <!-- Removed Load More from News -->
   </div>
-
 
   <script>
     let pageTokens = { anim3: '', donghua: '', news: '' };
@@ -45,9 +60,7 @@
       const pageToken = pageTokens[type] || '';
       try {
         const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageToken}`);
-        if (!res.ok) {
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
-        }
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         pageTokens[type] = data.nextPage || '';
         return data;
@@ -81,7 +94,6 @@
         loading.style.display = 'none';
         const row = document.createElement('div');
         row.className = section === 'news' ? '' : 'scroll-row';
-
         data.mixed.forEach(v => {
           const id = v.snippet.resourceId.videoId;
           if (loadedVideos[section].has(id)) return;
@@ -96,59 +108,47 @@
     }
 
     async function loadGrouped(section, containerId) {
-  const container = document.getElementById(containerId);
-  const loading = container.previousElementSibling;
-  loading.textContent = "Loading...";
-
-  try {
-    const data = await fetchVideos(section);
-    loading.style.display = 'none';
-
-    for (const group of Object.keys(data.grouped).sort()) {
-      const videos = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-      if (!videos.length) continue;
-
-      const heading = document.createElement('div');
-      heading.className = 'group-heading';
-      heading.textContent = group;
-
-      const groupWrapper = document.createElement('div');
-      groupWrapper.className = section === 'news' ? '' : 'scroll-row';
-
-      videos.forEach(v => {
-        const card = createCard(v);
-        groupWrapper.appendChild(card);
-        loadedVideos[section].add(v.snippet.resourceId.videoId);
-      });
-
-      container.appendChild(heading);
-      container.appendChild(groupWrapper);
+      const container = document.getElementById(containerId);
+      const loading = container.previousElementSibling;
+      loading.textContent = "Loading...";
+      try {
+        const data = await fetchVideos(section);
+        loading.style.display = 'none';
+        for (const group of Object.keys(data.grouped).sort()) {
+          const videos = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+          if (!videos.length) continue;
+          const heading = document.createElement('div');
+          heading.className = 'group-heading';
+          heading.textContent = group;
+          const groupWrapper = document.createElement('div');
+          groupWrapper.className = section === 'news' ? '' : 'scroll-row';
+          videos.forEach(v => {
+            const card = createCard(v);
+            groupWrapper.appendChild(card);
+            loadedVideos[section].add(v.snippet.resourceId.videoId);
+          });
+          container.appendChild(heading);
+          container.appendChild(groupWrapper);
+        }
+        if (data.mixed && data.mixed.length) {
+          const heading = document.createElement('div');
+          heading.className = 'group-heading';
+          heading.textContent = 'Mixed';
+          const row = document.createElement('div');
+          row.className = section === 'news' ? '' : 'scroll-row';
+          data.mixed.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).forEach(v => {
+            const card = createCard(v);
+            row.appendChild(card);
+            loadedVideos[section].add(v.snippet.resourceId.videoId);
+          });
+          container.appendChild(heading);
+          container.appendChild(row);
+        }
+      } catch (err) {
+        console.error("Group Load Error:", err);
+        loading.textContent = "Failed to load videos.";
+      }
     }
-
-    // Mixed
-    if (data.mixed && data.mixed.length) {
-      const heading = document.createElement('div');
-      heading.className = 'group-heading';
-      heading.textContent = 'Mixed';
-
-      const row = document.createElement('div');
-      row.className = section === 'news' ? '' : 'scroll-row';
-
-      data.mixed.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).forEach(v => {
-        const card = createCard(v);
-        row.appendChild(card);
-        loadedVideos[section].add(v.snippet.resourceId.videoId);
-      });
-
-      container.appendChild(heading);
-      container.appendChild(row);
-    }
-
-  } catch (err) {
-    console.error("Group Load Error:", err);
-    loading.textContent = "Failed to load videos.";
-  }
-}
 
     function loadMore(type) {
       if (type === 'anim3') loadFlat(type, `${type}-videos`);
@@ -159,6 +159,58 @@
     loadFlat("anim3", "anim3-videos");
     loadGrouped("donghua", "donghua-videos");
     loadGrouped("news", "news-videos");
+
+    // --- Authentication (LocalStorage-based) ---
+    function toggleAuthForm(mode) {
+      document.getElementById("authForm").style.display = "block";
+      document.getElementById("authTitle").textContent = mode === "signup" ? "Signup" : "Login";
+      document.getElementById("authForm").setAttribute("data-mode", mode);
+      document.getElementById("authMessage").textContent = '';
+    }
+
+    function submitAuth() {
+      const mode = document.getElementById("authForm").getAttribute("data-mode");
+      const username = document.getElementById("authUsername").value.trim();
+      const password = document.getElementById("authPassword").value;
+      if (!username || !password) return showMsg("Fill all fields");
+
+      const users = JSON.parse(localStorage.getItem("users") || "{}");
+      if (mode === "signup") {
+        if (users[username]) return showMsg("User already exists");
+        users[username] = password;
+        localStorage.setItem("users", JSON.stringify(users));
+        localStorage.setItem("loggedInUser", username);
+        hideAuthUI();
+      } else {
+        if (users[username] !== password) return showMsg("Invalid credentials");
+        localStorage.setItem("loggedInUser", username);
+        hideAuthUI();
+      }
+    }
+
+    function showMsg(msg) {
+      document.getElementById("authMessage").textContent = msg;
+    }
+
+    function hideAuthUI() {
+      document.getElementById("authForm").style.display = "none";
+      document.getElementById("loginBtn").style.display = "none";
+      document.getElementById("signupBtn").style.display = "none";
+      document.getElementById("logoutBtn").style.display = "inline-block";
+    }
+
+    function logout() {
+      localStorage.removeItem("loggedInUser");
+      document.getElementById("loginBtn").style.display = "inline-block";
+      document.getElementById("signupBtn").style.display = "inline-block";
+      document.getElementById("logoutBtn").style.display = "none";
+    }
+
+    window.onload = () => {
+      if (localStorage.getItem("loggedInUser")) {
+        hideAuthUI();
+      }
+    };
   </script>
 </body>
 </html>
