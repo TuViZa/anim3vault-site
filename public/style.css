@@ -143,5 +143,20 @@ header {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: 20px;
+  padding: 10px;
+  max-height: 65vh;        /* adjust this to control how much vertical space it takes */
+  overflow-y: auto;
+}
+
+.vertical-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.vertical-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.vertical-scroll::-webkit-scrollbar-track {
+  background: #222;
 }
