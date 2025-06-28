@@ -1,7 +1,9 @@
 const API_KEY = process.env.YT_API_KEY;
+
 const PLAYLISTS = {
   donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
-  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae"
+  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae",
+  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk" // ✅ Anime playlist added here
 };
 
 const DONGHUA_TITLES = [
