@@ -80,7 +80,8 @@
         const data = await fetchVideos(section);
         loading.style.display = 'none';
         const row = document.createElement('div');
-        row.className = 'scroll-row';
+        row.className = section === 'news' ? '' : 'scroll-row';
+
         data.mixed.forEach(v => {
           const id = v.snippet.resourceId.videoId;
           if (loadedVideos[section].has(id)) return;
