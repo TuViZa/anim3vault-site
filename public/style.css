@@ -65,6 +65,7 @@ header {
   gap: 16px;
   scroll-snap-type: x mandatory;
   padding-bottom: 10px;
+  padding-left: 5px;
 }
 
 .scroll-row::-webkit-scrollbar {
@@ -114,4 +115,33 @@ header {
   text-align: center;
   padding: 20px;
   font-size: 1.2em;
+}
+
+/* NEW STYLES ADDED BELOW */
+
+/* Load More Button */
+.load-more {
+  display: block;
+  margin: 20px auto;
+  padding: 10px 20px;
+  font-size: 1em;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.load-more:hover {
+  background: #f0f;
+  color: black;
+}
+
+/* For vertically stacked news cards */
+.vertical-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 20px;
 }
