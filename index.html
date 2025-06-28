@@ -11,6 +11,7 @@
       font-family: 'Segoe UI', sans-serif;
       scroll-behavior: smooth;
       background: #000;
+      color: white;
     }
     header {
       background: #111;
@@ -43,8 +44,7 @@
     }
     section {
       min-height: 100vh;
-      padding: 40px;
-      color: white;
+      padding: 40px 20px;
       overflow-y: auto;
     }
     #anim3 { background: purple; }
@@ -58,7 +58,7 @@
     }
     iframe {
       width: 100%;
-      height: 220px;
+      height: 200px;
       border: none;
       border-radius: 12px;
     }
@@ -75,21 +75,18 @@
 </div>
 
 <section id="anim3">
-  <h2>Anim3 Section (Anime Playlist)</h2>
-  <p>Latest anime uploads from the anime playlist.</p>
-  <iframe src="https://www.youtube.com/embed/videoseries?list=PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk" allowfullscreen></iframe>
+  <h2>Anim3 Section</h2>
+  <div class="video-grid" id="anim3-videos"></div>
 </section>
 
 <section id="donghua">
   <h2>Donghua Section</h2>
-  <p>Latest Donghua uploads from your playlist.</p>
-  <iframe src="https://www.youtube.com/embed/videoseries?list=PLbTlJpronU8_GMDGyQlawguePVZVNnxNO" allowfullscreen></iframe>
+  <div class="video-grid" id="donghua-videos"></div>
 </section>
 
 <section id="news">
   <h2>New$ Section</h2>
-  <p>Updates and announcements related to Anim3Vault.</p>
-  <iframe src="https://www.youtube.com/embed/videoseries?list=PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae" allowfullscreen></iframe>
+  <div class="video-grid" id="news-videos"></div>
 </section>
 
 <script>
@@ -97,7 +94,32 @@
     document.querySelectorAll('.nav-buttons a').forEach(a => a.classList.remove('active'));
     el.classList.add('active');
   }
+
+  const apiKey = 'AIzaSyDtENsqNq0pk-RLCFR73hLWL8OrA7FbJlo';
+
+  async function loadPlaylist(playlistId, containerId) {
+    const container = document.getElementById(containerId);
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=20&key=${apiKey}`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      data.items.forEach(item => {
+        const videoId = item.snippet.resourceId.videoId;
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${videoId}`;
+        iframe.allowFullscreen = true;
+        container.appendChild(iframe);
+      });
+    } catch (err) {
+      container.innerHTML = "<p>Failed to load videos.</p>";
+    }
+  }
+
+  loadPlaylist("PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk", "anim3-videos");
+  loadPlaylist("PLbTlJpronU8_GMDGyQlawguePVZVNnxNO", "donghua-videos");
+  loadPlaylist("PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae", "news-videos");
 </script>
 
 </body>
 </html>
+
