@@ -1,7 +1,11 @@
+import fetch from 'node-fetch';
+
 const API_KEY = process.env.YT_API_KEY;
+
 const PLAYLISTS = {
   donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
-  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae"
+  news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae",
+  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk"
 };
 
 const DONGHUA_TITLES = [
@@ -14,53 +18,82 @@ const DONGHUA_TITLES = [
   "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
 ];
 
-function titleMatches(title, keyword) {
+function matchTitle(title, keyword) {
   return title.toLowerCase().includes(keyword.toLowerCase());
 }
 
+async function fetchAllVideos(playlistId) {
+  const results = [];
+  let nextPage = '';
+  while (true) {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${nextPage}&key=${API_KEY}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (!json.items) break;
+    results.push(...json.items);
+    if (!json.nextPageToken) break;
+    nextPage = json.nextPageToken;
+  }
+
+  return results.filter(v =>
+    v.snippet &&
+    v.snippet.title &&
+    v.snippet.resourceId?.videoId &&
+    !v.snippet.title.toLowerCase().includes("deleted") &&
+    !v.snippet.title.toLowerCase().includes("private")
+  );
+}
+
 export default async function handler(req, res) {
-  const { type = "donghua" } = req.query;
-  const playlistId = PLAYLISTS[type];
-  if (!playlistId) return res.status(400).json({ error: 'Invalid playlist type.' });
-
-  let items = [], pageToken = '';
   try {
-    do {
-      const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
-      const data = await ytRes.json();
-      if (!data.items) break;
-      items.push(...data.items);
-      pageToken = data.nextPageToken || '';
-    } while (pageToken);
+    const { type = 'donghua' } = req.query;
+    const playlistId = PLAYLISTS[type];
+    if (!playlistId) return res.status(400).json({ error: "Invalid playlist type" });
 
-    const addedIds = new Set();
+    const allVideos = await fetchAllVideos(playlistId);
+    const added = new Set();
+
+    // For flat playlists like "anim3"
+    if (type === 'anim3') {
+      const unique = allVideos.filter(v => {
+        const id = v.snippet.resourceId.videoId;
+        if (added.has(id)) return false;
+        added.add(id);
+        return true;
+      });
+      return res.status(200).json({ mixed: unique });
+    }
+
+    // For grouped playlists like "donghua" or "news"
     const grouped = {};
     const mixed = [];
 
-    for (let keyword of DONGHUA_TITLES) {
-      grouped[keyword] = [];
+    for (let title of DONGHUA_TITLES) {
+      grouped[title] = [];
     }
 
-    for (let v of items) {
-      const title = v.snippet?.title || "";
-      const id = v.snippet?.resourceId?.videoId;
-      if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
+    for (let v of allVideos) {
+      const id = v.snippet.resourceId.videoId;
+      const title = v.snippet.title;
+      if (added.has(id)) continue;
 
       let matched = false;
-      for (let keyword of DONGHUA_TITLES) {
-        if (titleMatches(title, keyword)) {
-          grouped[keyword].push(v);
+      for (let groupTitle of DONGHUA_TITLES) {
+        if (matchTitle(title, groupTitle)) {
+          grouped[groupTitle].push(v);
           matched = true;
           break;
         }
       }
+
       if (!matched) mixed.push(v);
-      addedIds.add(id);
+      added.add(id);
     }
 
     return res.status(200).json({ grouped, mixed });
-  } catch (e) {
-    console.error("Fetch error:", e);
-    return res.status(500).json({ error: e.message });
+  } catch (err) {
+    console.error("API Error:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 }
