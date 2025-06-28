@@ -138,13 +138,12 @@ header {
   color: black;
 }
 
-/* For vertically stacked news cards */
 .vertical-scroll {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 10px;
-  max-height: 65vh;        /* adjust this to control how much vertical space it takes */
+  max-height: 65vh;
   overflow-y: auto;
 }
 
