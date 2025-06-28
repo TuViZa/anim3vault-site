@@ -18,85 +18,71 @@ const DONGHUA_TITLES = [
   "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
 ];
 
-const isValidVideo = (v) => (
+const isValid = (v) => (
   v?.snippet?.title &&
   !v.snippet.title.toLowerCase().includes("deleted") &&
   !v.snippet.title.toLowerCase().includes("private") &&
   v.snippet.resourceId?.videoId
 );
 
-async function fetchAllVideos(playlistId) {
-  let videos = [], nextPage = '';
-  try {
-    while (true) {
-      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${nextPage}&key=${API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!res.ok || !data.items) break;
-      videos.push(...data.items);
-      if (!data.nextPageToken) break;
-      nextPage = data.nextPageToken;
-    }
-  } catch (e) {
-    console.error("YouTube API fetch error:", e.message);
-    return null;
-  }
-  return videos.filter(isValidVideo);
-}
-
 function matchTitle(title, keyword) {
   return title.toLowerCase().includes(keyword.toLowerCase());
 }
 
 export default async function handler(req, res) {
-  const { type = 'donghua' } = req.query;
+  const { type = 'donghua', pageToken = '' } = req.query;
   const playlistId = PLAYLISTS[type];
+  if (!playlistId) return res.status(400).json({ error: "Invalid playlist type." });
 
-  if (!playlistId) {
-    return res.status(400).json({ error: "Invalid playlist type." });
-  }
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=20&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`;
+    const ytRes = await fetch(url);
+    const json = await ytRes.json();
 
-  const videos = await fetchAllVideos(playlistId);
-  if (!videos) {
-    return res.status(500).json({ error: "Failed to fetch videos." });
-  }
-
-  const added = new Set();
-
-  // For flat list (anim3)
-  if (type === "anim3") {
-    const mixed = videos.filter(v => {
-      const id = v.snippet.resourceId.videoId;
-      if (added.has(id)) return false;
-      added.add(id);
-      return true;
-    });
-    return res.status(200).json({ mixed });
-  }
-
-  // For grouped (donghua/news)
-  const grouped = {}, mixed = [];
-  for (const keyword of DONGHUA_TITLES) {
-    grouped[keyword] = [];
-  }
-
-  for (const v of videos) {
-    const id = v.snippet.resourceId.videoId;
-    const title = v.snippet.title;
-    if (added.has(id)) continue;
-
-    let matched = false;
-    for (const keyword of DONGHUA_TITLES) {
-      if (matchTitle(title, keyword)) {
-        grouped[keyword].push(v);
-        matched = true;
-        break;
-      }
+    if (!ytRes.ok || !json.items) {
+      return res.status(500).json({ error: "YouTube API Error", details: json });
     }
 
-    if (!matched) mixed.push(v);
-    added.add(id);
-  }
+    const items = json.items.filter(isValid);
+    const nextPage = json.nextPageToken || null;
+    const added = new Set();
 
-  return res.status(200).json({ grouped, mixed });
+    if (type === "anim3" || type === "news") {
+      const unique = items.filter(v => {
+        const id = v.snippet.resourceId.videoId;
+        if (added.has(id)) return false;
+        added.add(id);
+        return true;
+      });
+      return res.status(200).json({ mixed: unique, nextPage });
+    }
+
+    // Group for Donghua
+    const grouped = {};
+    const mixed = [];
+
+    for (let keyword of DONGHUA_TITLES) grouped[keyword] = [];
+
+    for (let v of items) {
+      const id = v.snippet.resourceId.videoId;
+      const title = v.snippet.title;
+      if (added.has(id)) continue;
+
+      let addedToGroup = false;
+      for (let keyword of DONGHUA_TITLES) {
+        if (matchTitle(title, keyword)) {
+          grouped[keyword].push(v);
+          addedToGroup = true;
+          break;
+        }
+      }
+      if (!addedToGroup) mixed.push(v);
+      added.add(id);
+    }
+
+    return res.status(200).json({ grouped, mixed, nextPage });
+  } catch (err) {
+    console.error("API fetch error:", err);
+    return res.status(500).json({ error: "Failed to fetch videos." });
+  }
 }
