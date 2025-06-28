@@ -1,53 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Anim3Vault</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <style>
-    html, body {
+    body {
       margin: 0;
-      padding: 0;
       font-family: 'Segoe UI', sans-serif;
       background: #000;
       color: white;
-      height: 100%;
-      overflow: hidden;
+      overflow-x: hidden;
     }
     header {
       background: #111;
-      color: #fff;
       text-align: center;
-      padding: 20px 0;
+      padding: 20px;
       font-size: 2em;
       font-weight: bold;
     }
     .nav-buttons {
       display: flex;
       justify-content: center;
-      flex-wrap: wrap;
       background: #222;
+      flex-wrap: wrap;
     }
     .nav-buttons a {
+      color: white;
       padding: 10px 15px;
       margin: 5px;
-      color: white;
       text-decoration: none;
       background: #444;
       border-radius: 8px;
-      transition: background 0.3s;
-      cursor: pointer;
       font-size: 1em;
+      cursor: pointer;
     }
-    .nav-buttons a.active, .nav-buttons a:hover {
+    .nav-buttons a.active {
       background: #f0f;
-      color: #000;
+      color: black;
     }
     .screen {
       display: none;
-      height: calc(100vh - 130px);
-      overflow-y: auto;
       padding: 10px;
+      min-height: calc(100vh - 130px);
     }
     .screen.active {
       display: block;
@@ -61,22 +56,40 @@
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 16px;
     }
+    .scroll-row {
+      display: flex;
+      overflow-x: auto;
+      gap: 16px;
+      scroll-snap-type: x mandatory;
+      padding-bottom: 10px;
+    }
+    .scroll-row::-webkit-scrollbar {
+      height: 6px;
+    }
+    .scroll-row::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+    .scroll-row::-webkit-scrollbar-track {
+      background: #222;
+    }
     .video-card {
       background: #1a1a1a;
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
-      text-align: center;
+      flex: 0 0 auto;
+      width: 280px;
+      scroll-snap-align: start;
     }
     .video-thumb {
       position: relative;
       width: 100%;
       padding-top: 56.25%;
-      background-color: #000;
+      background: #000;
     }
     .video-thumb iframe {
       position: absolute;
-      top: 0;
-      left: 0;
+      top: 0; left: 0;
       width: 100%;
       height: 100%;
       border: none;
@@ -84,17 +97,17 @@
     .video-title {
       padding: 10px;
       font-size: 0.95em;
+      text-align: center;
     }
     .loading {
       text-align: center;
       padding: 20px;
       font-size: 1.2em;
-      color: #ccc;
     }
     .group-heading {
-      font-size: 1.4em;
+      font-size: 1.3em;
       font-weight: bold;
-      margin: 20px 0 10px;
+      margin: 20px 0 5px;
       padding-left: 5px;
       text-transform: capitalize;
     }
@@ -126,98 +139,90 @@
 </div>
 
 <script>
-  function showScreen(screenId, btn) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
-    document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+function showScreen(screenId, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function fetchAllVideos(playlistId) {
+  let items = [];
+  let pageToken = '';
+  let attempts = 0;
+  do {
+    const res = await fetch(`/api/fetch-videos?playlistId=${playlistId}&maxResults=50&pageToken=${pageToken}`);
+    const data = await res.json();
+    if (!data.items) break;
+    items.push(...data.items);
+    pageToken = data.nextPageToken || '';
+    attempts++;
+  } while (pageToken && attempts < 10);
+  return items.filter(v => v.snippet && !v.snippet.title.toLowerCase().includes("deleted") && !v.snippet.title.toLowerCase().includes("private"));
+}
+
+async function loadFlatPlaylist(playlistId, containerId, loadingId) {
+  const container = document.getElementById(containerId);
+  const loading = document.getElementById(loadingId);
+  loading.textContent = "Loading...";
+  const videos = await fetchAllVideos(playlistId);
+  loading.style.display = "none";
+
+  for (let v of videos) {
+    const card = document.createElement("div");
+    card.className = "video-card";
+    card.innerHTML = `
+      <div class="video-thumb">
+        <iframe src="https://www.youtube.com/embed/${v.snippet.resourceId.videoId}" allowfullscreen></iframe>
+      </div>
+      <div class="video-title">${v.snippet.title}</div>`;
+    container.appendChild(card);
+  }
+}
+
+async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
+  const container = document.getElementById(containerId);
+  const loading = document.getElementById(loadingId);
+  loading.textContent = "Loading...";
+  const videos = await fetchAllVideos(playlistId);
+  loading.style.display = "none";
+
+  const groups = {};
+  for (let v of videos) {
+    const title = v.snippet.title;
+    const base = title.split(" ").slice(0, 4).join(" ").toLowerCase();
+    if (!groups[base]) groups[base] = [];
+    groups[base].push(v);
   }
 
-  function groupTitleKey(title) {
-    return title.split(" ").slice(0, 3).join(" ").toLowerCase();
-  }
+  Object.keys(groups).forEach(key => {
+    const heading = document.createElement("div");
+    heading.className = "group-heading";
+    heading.textContent = key;
+    container.appendChild(heading);
 
-  async function loadGroupedPlaylist(playlistId, containerId, loadingId) {
-    const container = document.getElementById(containerId);
-    const loading = document.getElementById(loadingId);
-    const url = `/api/fetch-videos?playlistId=${playlistId}&maxResults=20`;
+    const row = document.createElement("div");
+    row.className = "scroll-row";
 
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      loading.style.display = "none";
+    groups[key].forEach(v => {
+      const card = document.createElement("div");
+      card.className = "video-card";
+      card.innerHTML = `
+        <div class="video-thumb">
+          <iframe src="https://www.youtube.com/embed/${v.snippet.resourceId.videoId}" allowfullscreen></iframe>
+        </div>
+        <div class="video-title">${v.snippet.title}</div>`;
+      row.appendChild(card);
+    });
 
-      const groups = {};
+    container.appendChild(row);
+  });
+}
 
-      data.items.forEach(item => {
-        const videoId = item.snippet.resourceId.videoId;
-        const title = item.snippet.title;
-        const key = groupTitleKey(title);
-        if (!groups[key]) groups[key] = [];
-        groups[key].push({ videoId, title });
-      });
-
-      Object.keys(groups).forEach(key => {
-        const section = document.createElement("div");
-        const heading = document.createElement("div");
-        heading.className = "group-heading";
-        heading.textContent = key;
-        section.appendChild(heading);
-
-        const grid = document.createElement("div");
-        grid.className = "video-grid";
-
-        groups[key].forEach(({ videoId, title }) => {
-          const card = document.createElement("div");
-          card.className = "video-card";
-          card.innerHTML = `
-            <div class="video-thumb">
-              <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-            </div>
-            <div class="video-title">${title}</div>
-          `;
-          grid.appendChild(card);
-        });
-
-        section.appendChild(grid);
-        container.appendChild(section);
-      });
-
-    } catch (err) {
-      loading.innerHTML = "<p>Failed to load videos. Try again later.</p>";
-    }
-  }
-
-  async function loadFlatPlaylist(playlistId, containerId, loadingId) {
-    const container = document.getElementById(containerId);
-    const loading = document.getElementById(loadingId);
-    const url = `/api/fetch-videos?playlistId=${playlistId}&maxResults=20`;
-    try {
-      const res = await fetch(url);
-      const data = await res.json();
-      loading.style.display = "none";
-      data.items.forEach(item => {
-        const videoId = item.snippet.resourceId.videoId;
-        const title = item.snippet.title;
-        const card = document.createElement('div');
-        card.className = 'video-card';
-        card.innerHTML = `
-          <div class="video-thumb">
-            <iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>
-          </div>
-          <div class="video-title">${title}</div>
-        `;
-        container.appendChild(card);
-      });
-    } catch (err) {
-      loading.innerHTML = "<p>Failed to load videos. Try again later.</p>";
-    }
-  }
-
-  // Load playlists
-  loadFlatPlaylist("PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk", "anim3-videos", "anim3-loading");
-  loadGroupedPlaylist("PLbTlJpronU8_GMDGyQlawguePVZVNnxNO", "donghua-videos", "donghua-loading");
-  loadGroupedPlaylist("PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae", "news-videos", "news-loading");
+// Playlist IDs (replace with your own if needed)
+loadFlatPlaylist("PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk", "anim3-videos", "anim3-loading");
+loadGroupedPlaylist("PLbTlJpronU8_GMDGyQlawguePVZVNnxNO", "donghua-videos", "donghua-loading");
+loadGroupedPlaylist("PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae", "news-videos", "news-loading");
 </script>
 
 </body>
