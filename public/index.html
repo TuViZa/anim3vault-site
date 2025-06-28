@@ -96,51 +96,59 @@
     }
 
     async function loadGrouped(section, containerId) {
-      const container = document.getElementById(containerId);
-      const loading = container.previousElementSibling;
-      loading.textContent = "Loading...";
-      try {
-        const data = await fetchVideos(section);
-        loading.style.display = 'none';
+  const container = document.getElementById(containerId);
+  const loading = container.previousElementSibling;
+  loading.textContent = "Loading...";
 
-        for (const group of Object.keys(data.grouped).sort()) {
-          const videos = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-          if (!videos.length) continue;
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = group;
+  try {
+    const data = await fetchVideos(section);
+    loading.style.display = 'none';
 
-          const row = document.createElement('div');
-          row.className = 'scroll-row';
+    for (const group of Object.keys(data.grouped).sort()) {
+      const videos = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+      if (!videos.length) continue;
 
-          videos.forEach(v => {
-            row.appendChild(createCard(v));
-            loadedVideos[section].add(v.snippet.resourceId.videoId);
-          });
+      const heading = document.createElement('div');
+      heading.className = 'group-heading';
+      heading.textContent = group;
 
-          container.appendChild(heading);
-          container.appendChild(row);
-        }
+      const groupWrapper = document.createElement('div');
+      groupWrapper.className = section === 'news' ? '' : 'scroll-row';
 
-        if (data.mixed && data.mixed.length) {
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = 'Mixed';
+      videos.forEach(v => {
+        const card = createCard(v);
+        groupWrapper.appendChild(card);
+        loadedVideos[section].add(v.snippet.resourceId.videoId);
+      });
 
-          const row = document.createElement('div');
-          row.className = 'scroll-row';
-          data.mixed.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).forEach(v => {
-            row.appendChild(createCard(v));
-            loadedVideos[section].add(v.snippet.resourceId.videoId);
-          });
-          container.appendChild(heading);
-          container.appendChild(row);
-        }
-      } catch (err) {
-        console.error("Group Load Error:", err);
-        loading.textContent = "Failed to load videos.";
-      }
+      container.appendChild(heading);
+      container.appendChild(groupWrapper);
     }
+
+    // Mixed
+    if (data.mixed && data.mixed.length) {
+      const heading = document.createElement('div');
+      heading.className = 'group-heading';
+      heading.textContent = 'Mixed';
+
+      const row = document.createElement('div');
+      row.className = section === 'news' ? '' : 'scroll-row';
+
+      data.mixed.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).forEach(v => {
+        const card = createCard(v);
+        row.appendChild(card);
+        loadedVideos[section].add(v.snippet.resourceId.videoId);
+      });
+
+      container.appendChild(heading);
+      container.appendChild(row);
+    }
+
+  } catch (err) {
+    console.error("Group Load Error:", err);
+    loading.textContent = "Failed to load videos.";
+  }
+}
 
     function loadMore(type) {
       if (type === 'anim3') loadFlat(type, `${type}-videos`);
