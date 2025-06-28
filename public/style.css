@@ -193,3 +193,36 @@ header {
   padding-bottom: 10px;
   padding-left: 5px;
 }
+
+.auth-buttons {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.auth-buttons button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  font-size: 0.9em;
+  background: #444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.auth-buttons button:hover {
+  background: #f0f;
+  color: black;
+}
+
+.auth-form {
+  background: #111;
+  padding: 20px;
+  max-width: 300px;
+  margin: 20px auto;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
