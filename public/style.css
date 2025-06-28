@@ -160,3 +160,10 @@ header {
   background: #222;
 }
 
+#news-videos.scroll-row {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  gap: 16px;
+}
