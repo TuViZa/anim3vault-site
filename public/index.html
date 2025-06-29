@@ -373,5 +373,109 @@
       loadGrouped("news", "news-videos");
     };
   </script>
+  <!-- Only the <script> section is shown below for brevity.
+Place it at the end of your existing <body> -->
+<script>
+let pageTokens = { anim3: '', donghua: '', news: '' };
+const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
+
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function fetchVideos(type) {
+  const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]}`);
+  const data = await res.json();
+  pageTokens[type] = data.nextPage || '';
+  return data;
+}
+
+function createCard(video) {
+  const card = document.createElement('div');
+  card.className = 'video-card';
+  const vid = video.snippet.resourceId.videoId;
+  const thumbnail = video.snippet.thumbnails.medium.url;
+  card.innerHTML = `
+    <div class="video-thumb">
+      <img src="${thumbnail}" alt="${video.snippet.title}" />
+    </div>
+    <div class="video-title">${video.snippet.title}</div>
+  `;
+  card.querySelector('img').onclick = () => showModal(video);
+  return card;
+}
+
+async function loadGrouped(section, containerId) {
+  const container = document.getElementById(containerId);
+  const loading = container.previousElementSibling;
+  loading.textContent = "Loading...";
+  const data = await fetchVideos(section);
+  loading.style.display = 'none';
+
+  const allGroups = [];
+
+  // Extract and insert the "LATEST" group
+  const latestVideos = [...(data.latest || [])].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).slice(0, 20);
+  if (latestVideos.length) {
+    const latestWrapper = document.createElement('div');
+    latestWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+    const latestHeading = document.createElement('div');
+    latestHeading.className = 'group-heading';
+    latestHeading.style.background = 'red';
+    latestHeading.style.color = 'black';
+    latestHeading.textContent = 'LATEST';
+
+    latestVideos.forEach(v => {
+      loadedVideos[section].add(v.snippet.resourceId.videoId);
+      latestWrapper.appendChild(createCard(v));
+    });
+
+    container.appendChild(latestHeading);
+    container.appendChild(latestWrapper);
+  }
+
+  // All other groups sorted by latest publish date
+  if (section !== 'news') {
+    for (const groupName of Object.keys(data.grouped || {})) {
+      const vids = data.grouped[groupName].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+      if (vids.length) {
+        const latest = Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()));
+        allGroups.push({ name: groupName, videos: vids, latest });
+      }
+    }
+  }
+
+  const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+  if (mixed.length) {
+    const latest = Math.max(...mixed.map(v => new Date(v.snippet.publishedAt).getTime()));
+    allGroups.push({ name: 'Mixed', videos: mixed, latest });
+  }
+
+  allGroups.sort((a, b) => b.latest - a.latest);
+
+  for (const group of allGroups) {
+    const heading = document.createElement('div');
+    heading.className = 'group-heading';
+    heading.textContent = group.name;
+    const wrapper = document.createElement('div');
+    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+    group.videos.forEach(v => {
+      loadedVideos[section].add(v.snippet.resourceId.videoId);
+      wrapper.appendChild(createCard(v));
+    });
+
+    container.appendChild(heading);
+    container.appendChild(wrapper);
+  }
+}
+
+// Modal and Auth (unchanged code from your existing script)
+</script>
+
 </body>
 </html>
