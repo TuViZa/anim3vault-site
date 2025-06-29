@@ -360,9 +360,11 @@
 
     window.onload = () => {
       if (localStorage.getItem("loggedInUser")) hideAuthUI();
-      loadFlat("anim3", "anim3-videos");
-      loadGrouped("donghua", "donghua-videos");
-      loadGrouped("news", "news-videos");
+      // Initial Load (all grouped to support group titles)
+loadGrouped("anim3", "anim3-videos");
+loadGrouped("donghua", "donghua-videos");
+loadGrouped("news", "news-videos");
+
     };
   </script>
 </body>
