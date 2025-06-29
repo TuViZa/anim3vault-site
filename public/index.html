@@ -236,9 +236,11 @@ function showModal(video) {
     </a>
   `;
   document.getElementById("modal-comments").innerHTML = `
-    <iframe width="100%" height="300" src="https://www.youtube.com/watch?v=${vid}" 
-      frameborder="0"></iframe>
-  `;
+  <a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank" style="color:#f0f; display:block; margin-top:10px;">
+    View Comments on YouTube
+  </a>
+`;
+
 
   document.getElementById("videoModal").style.display = "block";
 }
