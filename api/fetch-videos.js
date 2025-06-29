@@ -42,7 +42,9 @@ export default async function handler(req, res) {
     const mixed = [];
     const latest = [];
 
-    for (const kw of DONGHUA_TITLES) grouped[kw] = [];
+    if (type === "donghua") {
+      for (const kw of DONGHUA_TITLES) grouped[kw] = [];
+    }
 
     for (const v of items) {
       const t = v.snippet?.title || "";
@@ -59,7 +61,11 @@ export default async function handler(req, res) {
           }
         }
       }
-      if (!matched) mixed.push(v);
+
+      if (!matched) {
+        mixed.push(v);
+      }
+
       added.add(id);
     }
 
@@ -71,7 +77,13 @@ export default async function handler(req, res) {
       );
     }
 
-    return res.status(200).json({ grouped, mixed, latest });
+    // Always return all 3 fields for consistency
+    return res.status(200).json({
+      latest: type !== "news" ? latest : [],
+      mixed,
+      grouped: type === "donghua" ? grouped : {}
+    });
+
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e.message });
