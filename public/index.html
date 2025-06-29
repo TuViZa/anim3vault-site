@@ -182,7 +182,14 @@
       heading.textContent = 'Mixed';
 
       const wrapper = document.createElement('div');
-      wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+if (section === 'news') {
+  wrapper.style.alignItems = 'flex-end'; // ensures video cards align right
+  wrapper.style.display = 'flex';
+  wrapper.style.flexDirection = 'column';
+}
+
 
       mixed.forEach(v => {
         const vid = v.snippet.resourceId.videoId;
