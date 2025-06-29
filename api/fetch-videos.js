@@ -56,12 +56,12 @@ export default async function handler(req, res) {
       let matched = false;
       if (type === "donghua") {
         for (let keyword of DONGHUA_TITLES) {
-          if (titleMatches(title, keyword)) {
-            grouped[keyword].push(v);
-            matched = true;
-            break;
-          }
-        }
+  if (title.toLowerCase().includes(keyword.toLowerCase())) {
+    grouped[keyword].push(v);
+    matched = true;
+  }
+}
+
       }
 
       if (!matched) mixed.push(v);
@@ -78,19 +78,26 @@ export default async function handler(req, res) {
 
     // Sort group order (donghua only) based on newest video timestamp
     if (type === "donghua") {
-      const sortedGroups = Object.entries(grouped)
-        .filter(([_, vids]) => vids.length > 0)
-        .map(([name, vids]) => ({
-          name,
-          videos: vids.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)),
-          latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
-        }))
-        .sort((a, b) => b.latestTime - a.latestTime);
+  const sortedGroups = Object.entries(grouped)
+    .filter(([_, vids]) => vids.length > 0)
+    .map(([name, vids]) => ({
+      name,
+      videos: vids.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)),
+      latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
+    }))
+    .sort((a, b) => b.latestTime - a.latestTime);
 
-      const sortedGrouped = {};
-      for (const group of sortedGroups) {
-        sortedGrouped[group.name] = group.videos;
-      }
+  const sortedGrouped = {};
+  for (const group of sortedGroups) {
+    sortedGrouped[group.name] = group.videos;
+  }
+
+  // ✅ ADD THIS LOG LINE HERE:
+  console.log("Donghua groups:", Object.entries(sortedGrouped).map(([k, v]) => [k, v.length]));
+
+  return res.status(200).json({ latest, mixed, grouped: sortedGrouped });
+}
+
 
       return res.status(200).json({ latest, mixed, grouped: sortedGrouped });
     }
