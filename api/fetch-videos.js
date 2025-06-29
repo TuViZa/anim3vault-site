@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   let items = [], pageToken = '';
   try {
     do {
-      const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
+      const ytRes = await fetch(https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY});
       const data = await ytRes.json();
       if (!data.items) break;
       items.push(...data.items);
@@ -39,7 +39,6 @@ export default async function handler(req, res) {
     const addedIds = new Set();
     const grouped = {};
     const latest = [];
-    const mixed = [];
 
     for (let keyword of DONGHUA_TITLES) {
       grouped[keyword] = [];
@@ -58,7 +57,6 @@ export default async function handler(req, res) {
           break;
         }
       }
-      if (!matched && type !== "donghua") mixed.push(v); // omit mixed for donghua
       addedIds.add(id);
     }
 
@@ -67,7 +65,7 @@ export default async function handler(req, res) {
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
       .slice(0, 20));
 
-    return res.status(200).json({ grouped, latest, mixed });
+    return res.status(200).json({ grouped, latest });
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
