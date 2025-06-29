@@ -71,17 +71,22 @@
     }
 
     function createCard(video) {
-      const card = document.createElement('div');
-      card.className = 'video-card';
-      const vid = video.snippet.resourceId.videoId;
-      card.innerHTML = `
-        <div class="video-thumb">
-          <iframe src="https://www.youtube.com/embed/${vid}" loading="lazy" allowfullscreen></iframe>
-        </div>
-        <div class="video-title">${video.snippet.title}</div>
-      `;
-      return card;
-    }
+  const card = document.createElement('div');
+  card.className = 'video-card';
+  const vid = video.snippet.resourceId.videoId;
+  const thumbUrl = video.snippet.thumbnails.medium.url;
+
+  card.innerHTML = `
+    <a href="https://www.youtube.com/watch?v=${vid}" target="_blank">
+      <div class="video-thumb">
+        <img src="${thumbUrl}" alt="${video.snippet.title}" loading="lazy" />
+      </div>
+      <div class="video-title">${video.snippet.title}</div>
+    </a>
+  `;
+  return card;
+}
+
 
     const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
