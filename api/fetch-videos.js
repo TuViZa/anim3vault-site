@@ -61,24 +61,34 @@ export default async function handler(req, res) {
             break;
           }
         }
-        // unmatched videos are NOT added to `mixed` for donghua
+        // Unmatched videos are ignored for donghua
       } else {
-        matched = true; // group everything together for non-donghua
+        // For anim3 and news, everything goes in mixed if unmatched
+        matched = false;
       }
 
       if (!matched && type !== 'donghua') {
         mixed.push(v);
       }
 
-      addedIds.add(id);
+      if (matched || type !== 'donghua') {
+        addedIds.add(id);
+      }
     }
 
+    // Sort items by publishedAt and take top 20 for LATEST
     latest.push(...[...items]
       .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
       .slice(0, 20));
 
-    return res.status(200).json({ grouped, latest, ...(type !== 'donghua' && { mixed }) });
+    const responseData = { grouped, latest };
+
+    if (type === 'anim3' || type === 'news') {
+      responseData.mixed = mixed;
+    }
+
+    return res.status(200).json(responseData);
 
   } catch (e) {
     console.error("Fetch error:", e);
