@@ -130,7 +130,7 @@
     container.innerHTML = '';
 
     // LATEST
-    if (section !== 'news' && latestData?.length) {
+    if (section !== 'news' && latestData?.latest?.length) {
       const latestHeading = document.createElement('div');
       latestHeading.className = 'group-heading red';
       latestHeading.textContent = 'LATEST';
@@ -138,7 +138,7 @@
       const latestRow = document.createElement('div');
       latestRow.className = 'scroll-row';
 
-      latestData.forEach(v => {
+      latestData.latest.forEach(v => {
         const vid = v.snippet.resourceId.videoId;
         if (!loadedVideos[section].has(vid)) {
           loadedVideos[section].add(vid);
