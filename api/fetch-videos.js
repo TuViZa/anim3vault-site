@@ -13,8 +13,8 @@ const DONGHUA_TITLES = [
   "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "immortal Doctor in Modern City",
   "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect world",
   "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
-  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul","mo-tian records","lord of mysteries",
-  "above the kingdom of god","the all-devouring whale"
+  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul",
+  "mo-tian records", "lord of mysteries", "above the kingdom of god", "the all-devouring whale"
 ];
 
 function titleMatches(title, keyword) {
@@ -38,11 +38,13 @@ export default async function handler(req, res) {
 
     const addedIds = new Set();
     const grouped = {};
-    const mixed = [];
     const latest = [];
+    const mixed = [];
 
-    for (let keyword of DONGHUA_TITLES) {
-      grouped[keyword] = [];
+    if (type === 'donghua') {
+      for (let keyword of DONGHUA_TITLES) {
+        grouped[keyword] = [];
+      }
     }
 
     for (let v of items) {
@@ -51,24 +53,33 @@ export default async function handler(req, res) {
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
       let matched = false;
-      for (let keyword of DONGHUA_TITLES) {
-        if (titleMatches(title, keyword)) {
-          grouped[keyword].push(v);
-          matched = true;
-          break;
+      if (type === 'donghua') {
+        for (let keyword of DONGHUA_TITLES) {
+          if (titleMatches(title, keyword)) {
+            grouped[keyword].push(v);
+            matched = true;
+            break;
+          }
         }
+        // unmatched videos are NOT added to `mixed` for donghua
+      } else {
+        matched = true; // group everything together for non-donghua
       }
-      if (!matched) mixed.push(v);
+
+      if (!matched && type !== 'donghua') {
+        mixed.push(v);
+      }
+
       addedIds.add(id);
     }
 
-    // Sort items by publishedAt descending and take top 20 for "LATEST"
     latest.push(...[...items]
       .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
       .slice(0, 20));
 
-    return res.status(200).json({ grouped, mixed, latest });
+    return res.status(200).json({ grouped, latest, ...(type !== 'donghua' && { mixed }) });
+
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
