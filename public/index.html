@@ -244,7 +244,7 @@
     }
 
     async function fetchVideos(type) {
-      const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]}`);
+      const res = await fetch(/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]});
       const data = await res.json();
       pageTokens[type] = data.nextPage || '';
       return data;
@@ -255,13 +255,12 @@
       card.className = 'video-card';
       const vid = video.snippet.resourceId.videoId;
       const thumbnail = video.snippet.thumbnails.medium.url;
-      card.innerHTML = `
-  <div class="video-thumb">
-    <img src="${thumbnail}" alt="${video.snippet.title}" />
-  </div>
-  <div class="video-title">${video.snippet.title}</div>
-`;
-
+      card.innerHTML = 
+        <div class="video-thumb">
+          <img src="${thumbnail}" alt="${video.snippet.title}" />
+        </div>
+        <div class="video-title">${video.snippet.title}</div>
+      ;
       card.querySelector('img').onclick = () => showModal(video);
       return card;
     }
@@ -355,11 +354,10 @@
     function showModal(video) {
       const vid = video.snippet.resourceId.videoId;
       document.getElementById("modal-title").textContent = video.snippet.title;
-     document.getElementById("modal-video").innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
+      document.getElementById("modal-video").innerHTML = <iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>;
       document.getElementById("modal-description").textContent = video.snippet.description;
-      document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
-document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments on YouTube</a>`;
-
+      document.getElementById("modal-channel").innerHTML = <a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>;
+      document.getElementById("modal-comments").innerHTML = <a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments on YouTube</a>;
       document.getElementById("videoModal").style.display = "flex";
     }
 
