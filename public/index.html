@@ -259,37 +259,50 @@
       loading.style.display = 'none';
 
       for (const group of Object.keys(data.grouped).sort()) {
-        const heading = document.createElement('div');
-        heading.className = 'group-heading';
-        heading.textContent = group;
-        const groupWrapper = document.createElement('div');
-        groupWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-        data.grouped[group].forEach(v => {
-          const id = v.snippet.resourceId.videoId;
-          if (loadedVideos[section].has(id)) return;
-          loadedVideos[section].add(id);
-          groupWrapper.appendChild(createCard(v));
-        });
-        container.appendChild(heading);
-        container.appendChild(groupWrapper);
-      }
+  const videos = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+  if (!videos.length) continue;
 
-      if (data.mixed && data.mixed.length) {
-        const heading = document.createElement('div');
-        heading.className = 'group-heading';
-        heading.textContent = 'Mixed';
-        const row = document.createElement('div');
-        row.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-        data.mixed.forEach(v => {
-          const id = v.snippet.resourceId.videoId;
-          if (loadedVideos[section].has(id)) return;
-          loadedVideos[section].add(id);
-          row.appendChild(createCard(v));
-        });
-        container.appendChild(heading);
-        container.appendChild(row);
-      }
-    }
+  const groupWrapper = document.createElement('div');
+  groupWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+  if (section !== 'news') {
+    const heading = document.createElement('div');
+    heading.className = 'group-heading';
+    heading.textContent = group;
+    container.appendChild(heading);
+  }
+
+  videos.forEach(v => {
+    const id = v.snippet.resourceId.videoId;
+    if (loadedVideos[section].has(id)) return;
+    loadedVideos[section].add(id);
+    groupWrapper.appendChild(createCard(v));
+  });
+
+  container.appendChild(groupWrapper);
+}
+
+if (data.mixed && data.mixed.length) {
+  const row = document.createElement('div');
+  row.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+  if (section !== 'news') {
+    const heading = document.createElement('div');
+    heading.className = 'group-heading';
+    heading.textContent = 'Mixed';
+    container.appendChild(heading);
+  }
+
+  data.mixed.forEach(v => {
+    const id = v.snippet.resourceId.videoId;
+    if (loadedVideos[section].has(id)) return;
+    loadedVideos[section].add(id);
+    row.appendChild(createCard(v));
+  });
+
+  container.appendChild(row);
+}
+
 
     function loadMore(type) {
       if (type === 'anim3') loadFlat(type, `${type}-videos`);
