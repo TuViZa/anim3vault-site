@@ -354,7 +354,15 @@
     function showModal(video) {
       const vid = video.snippet.resourceId.videoId;
       document.getElementById("modal-title").textContent = video.snippet.title;
-      document.getElementById("modal-video").innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
+      document.getElementById("modal-video").innerHTML = `
+  <iframe 
+    src="https://www.youtube.com/embed/${vid}?autoplay=1" 
+    frameborder="0" 
+    allow="fullscreen; autoplay" 
+    allowfullscreen
+    style="aspect-ratio: 16/9; width: 100%; max-height: 90vh;">
+  </iframe>`;
+
       document.getElementById("modal-description").textContent = video.snippet.description;
       document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
       document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments on YouTube</a>`;
