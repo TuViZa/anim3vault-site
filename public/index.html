@@ -176,57 +176,18 @@
 
     // MIXED
     const mixed = (groupedData.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-    if (mixed.length) {
-  const heading = document.createElement('div');
-  heading.className = 'group-heading';
-  heading.textContent = 'Mixed';
+     if (mixed.length) {
+      const heading = document.createElement('div');
+      heading.className = 'group-heading';
+      heading.textContent = 'Mixed';
 
-  const wrapper = document.createElement('div');
-  
-  if (section === 'news') {
-    // For NEWS section: right-aligned cards, label on left
-    wrapper.className = 'vertical-scroll';
-    wrapper.style.flexDirection = 'row';
-    wrapper.style.justifyContent = 'space-between';
-    wrapper.style.alignItems = 'flex-start';
-    wrapper.style.width = '100%';
+      const wrapper = document.createElement('div');
+wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
 
-    // Add 'North East West South' label to left
-    const label = document.createElement('div');
-    label.textContent = 'North East West South';
-    label.style.color = 'white';
-    label.style.padding = '10px';
-    label.style.fontSize = '1.2em';
-    label.style.flexShrink = '0';
-    label.style.marginRight = 'auto';
-    label.style.whiteSpace = 'nowrap';
-    wrapper.appendChild(label);
-
-    // Append video cards to the right
-    const cardColumn = document.createElement('div');
-    cardColumn.style.display = 'flex';
-    cardColumn.style.flexDirection = 'column';
-    cardColumn.style.gap = '16px';
-    cardColumn.style.alignItems = 'flex-end';
-    mixed.forEach(v => {
-      const vid = v.snippet.resourceId.videoId;
-      loadedVideos[section].add(vid);
-      cardColumn.appendChild(createCard(v));
-    });
-    wrapper.appendChild(cardColumn);
-
-  } else {
-    // For anim3 and donghua: horizontal scroll
-    wrapper.className = 'scroll-row';
-    mixed.forEach(v => {
-      const vid = v.snippet.resourceId.videoId;
-      loadedVideos[section].add(vid);
-      wrapper.appendChild(createCard(v));
-    });
-  }
-
-  container.appendChild(heading);
-  container.appendChild(wrapper);
+if (section === 'news') {
+  wrapper.style.alignItems = 'flex-end'; // ensures video cards align right
+  wrapper.style.display = 'flex';
+  wrapper.style.flexDirection = 'column';
 }
 
 
