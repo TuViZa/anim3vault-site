@@ -13,8 +13,7 @@ const DONGHUA_TITLES = [
   "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "immortal Doctor in Modern City",
   "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect world",
   "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
-  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul",
-  "mo-tian records", "lord of mysteries", "above the kingdom of god"
+  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul","mo-tian records","lord of mysteries","above the kingdom of god"
 ];
 
 function titleMatches(title, keyword) {
