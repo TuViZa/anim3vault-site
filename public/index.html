@@ -12,103 +12,67 @@
       color: white;
       overflow-x: hidden;
     }
-
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #111;
-      padding: 10px 20px;
-      font-size: 1.8em;
-      font-weight: bold;
-      text-align: center;
-      color: white;
+      position: sticky; top: 0; z-index: 100;
+      background: #111; padding: 10px 20px;
+      font-size: 1.8em; font-weight: bold;
+      text-align: center; color: white;
     }
-
     .auth-buttons {
-      position: absolute;
-      right: 20px;
-      top: 10px;
+      position: absolute; right: 20px; top: 10px;
     }
-
     .auth-buttons button {
-      margin-left: 8px;
-      padding: 6px 10px;
-      background: #444;
-      color: white;
-      border: none;
-      border-radius: 6px;
+      margin-left: 8px; padding: 6px 10px;
+      background: #444; color: white;
+      border: none; border-radius: 6px;
       cursor: pointer;
     }
-
     .auth-form {
-      background: #111;
-      padding: 15px;
-      max-width: 300px;
-      margin: 10px auto;
+      background: #111; padding: 15px;
+      max-width: 300px; margin: 10px auto;
       border-radius: 10px;
     }
-
     .auth-form input {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-      border: none;
+      width: 100%; margin-bottom: 10px;
+      padding: 8px; border: none;
       border-radius: 4px;
     }
-
     .nav-buttons {
       display: flex;
       justify-content: center;
       background: #222;
       flex-wrap: wrap;
     }
-
     .nav-buttons .btn {
-      color: white;
-      padding: 10px 15px;
-      margin: 5px;
-      background: #444;
-      border-radius: 8px;
-      font-size: 1em;
+      color: white; padding: 10px 15px;
+      margin: 5px; background: #444;
+      border-radius: 8px; font-size: 1em;
       cursor: pointer;
     }
-
     .nav-buttons .btn.active {
-      background: #f0f;
-      color: black;
+      background: #f0f; color: black;
     }
-
     .screen {
-      display: none;
-      padding: 10px;
+      display: none; padding: 10px;
       transition: background-color 0.3s ease;
     }
-
     .screen.active {
       display: block;
     }
-
     #anim3 { background-color: #18112b; }
     #donghua { background-color: #12243b; }
-    #news { background-color: #2b1414; }
-
+    #news { background-color: #2b1414; display: flex; justify-content: flex-end; }
     .scroll-row {
-      display: flex;
-      overflow-x: auto;
-      gap: 16px;
-      padding-bottom: 10px;
+      display: flex; overflow-x: auto;
+      gap: 16px; padding-bottom: 10px;
     }
-
     .vertical-scroll {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      max-height: 75vh;
-      overflow-y: auto;
-      padding-right: 5px;
+      display: flex; flex-direction: column;
+      gap: 16px; max-height: 75vh;
+      overflow-y: auto; padding-right: 5px;
+      align-items: flex-end;
+      padding-left: 60px;
     }
-
     .video-card {
       background: #1a1a1a;
       border-radius: 10px;
@@ -116,65 +80,47 @@
       width: 280px;
       flex-shrink: 0;
     }
-
     .video-thumb img {
-      width: 100%;
-      display: block;
-      cursor: pointer;
-      aspect-ratio: 16/9;
+      width: 100%; display: block;
+      cursor: pointer; aspect-ratio: 16/9;
       object-fit: cover;
     }
-
     .video-title {
-      padding: 10px;
-      text-align: center;
+      padding: 10px; text-align: center;
     }
-
     .group-heading {
-      background: black;
-      color: white;
+      background: black; color: white;
       padding: 10px 16px;
-      font-size: 1.2em;
-      font-weight: bold;
-      width: 100%;
-      margin: 20px 0 10px 0;
+      font-size: 1.2em; font-weight: bold;
+      width: 100%; margin: 20px 0 10px 0;
     }
-
+    .group-heading.latest {
+      background: red; color: black;
+    }
     .modal {
       display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
+      position: fixed; top: 0; left: 0;
+      width: 100vw; height: 100vh;
       background-color: rgba(0,0,0,0.9);
       z-index: 1000;
       justify-content: center;
       align-items: center;
     }
-
     .modal-content {
-      max-width: 900px;
-      width: 90%;
-      background: #111;
-      padding: 15px;
+      max-width: 900px; width: 90%;
+      background: #111; padding: 15px;
       border-radius: 8px;
       max-height: 90vh;
       overflow-y: auto;
     }
-
     .modal-content iframe {
-      width: 100%;
-      height: 50vw;
+      width: 100%; height: 50vw;
       max-height: 450px;
     }
-
     .close-btn {
-      float: right;
-      font-size: 24px;
-      color: #f0f;
-      cursor: pointer;
+      float: right; font-size: 24px;
+      color: #f0f; cursor: pointer;
     }
-
     @media screen and (max-width: 768px) {
       .modal-content iframe {
         height: 56vw;
@@ -217,12 +163,11 @@
   </div>
 
   <div id="news" class="screen">
-    <div class="loading">Loading News videos...</div>
-    <div id="news-videos" class="vertical-scroll"></div>
+    <div class="vertical-scroll" id="news-videos"></div>
   </div>
 
   <div id="videoModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-content" onclick="e => e.stopPropagation()">
       <span class="close-btn" onclick="closeModal()">&times;</span>
       <h2 id="modal-title"></h2>
       <div id="modal-video"></div>
@@ -234,7 +179,7 @@
 
   <script>
     let pageTokens = { anim3: '', donghua: '', news: '' };
-    const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
+    let loaded = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
     function showScreen(id, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -244,260 +189,101 @@
     }
 
     async function fetchVideos(type) {
-      const res = await fetch(/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]});
+      let res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]}`);
       const data = await res.json();
       pageTokens[type] = data.nextPage || '';
       return data;
     }
 
-    function createCard(video) {
+    function createCard(v) {
       const card = document.createElement('div');
       card.className = 'video-card';
-      const vid = video.snippet.resourceId.videoId;
-      const thumbnail = video.snippet.thumbnails.medium.url;
-      card.innerHTML = 
+      const vid = v.snippet.resourceId.videoId;
+      const th = v.snippet.thumbnails.medium.url;
+      card.innerHTML = `
         <div class="video-thumb">
-          <img src="${thumbnail}" alt="${video.snippet.title}" />
+          <img src="${th}" alt="${v.snippet.title}" />
         </div>
-        <div class="video-title">${video.snippet.title}</div>
-      ;
-      card.querySelector('img').onclick = () => showModal(video);
+        <div class="video-title">${v.snippet.title}</div>`;
+      card.querySelector('img').onclick = () => showModal(v);
       return card;
     }
 
-    async function loadGrouped(section, containerId) {
-      const container = document.getElementById(containerId);
-      const loading = container.previousElementSibling;
-      loading.textContent = "Loading...";
-      const data = await fetchVideos(section);
-      loading.style.display = 'none';
+    async function loadGrouped(type, id) {
+      const cont = document.getElementById(id);
+      const data = await fetchVideos(type);
 
-      const allGroups = [];
-
-      if (section !== 'news') {
-        for (const groupName of Object.keys(data.grouped || {})) {
-          const vids = data.grouped[groupName].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-          if (vids.length) {
-            const latest = Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()));
-            allGroups.push({ name: groupName, videos: vids, latest });
+      // LATEST
+      if (data.latest) {
+        const head = document.createElement('div');
+        head.className = 'group-heading latest';
+        head.textContent = 'LATEST';
+        const wrap = document.createElement('div');
+        wrap.className = type === 'news' ? 'vertical-scroll' : 'scroll-row';
+        data.latest.slice(0,20).forEach(v => {
+          if (!loaded[type].has(v.snippet.resourceId.videoId)) {
+            loaded[type].add(v.snippet.resourceId.videoId);
+            wrap.appendChild(createCard(v));
           }
-        }
+        });
+        cont.appendChild(head);
+        cont.appendChild(wrap);
       }
 
-      const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-      if (mixed.length) {
-        const latest = Math.max(...mixed.map(v => new Date(v.snippet.publishedAt).getTime()));
-        allGroups.push({ name: 'Mixed', videos: mixed, latest });
+      // other groups
+      let groups = [];
+      if (data.grouped) {
+        Object.entries(data.grouped)
+          .filter(([_,arr]) => arr.length)
+          .forEach(([name,videos]) => {
+            const t = Math.max(...videos.map(v => new Date(v.snippet.publishedAt)));
+            groups.push({name, videos, latest: t});
+          });
+      }
+      if (data.mixed) {
+        const videos = data.mixed;
+        const t = Math.max(...videos.map(v => new Date(v.snippet.publishedAt)));
+        groups.push({name:'Mixed', videos, latest:t});
       }
 
-      allGroups.sort((a, b) => b.latest - a.latest); // Most recent first
-
-      for (const group of allGroups) {
+      groups.sort((a,b)=>b.latest - a.latest);
+      groups.forEach(g=>{
         const heading = document.createElement('div');
         heading.className = 'group-heading';
-        heading.textContent = group.name;
+        heading.textContent = g.name;
         const wrapper = document.createElement('div');
-        wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-        group.videos.forEach(v => {
-          loadedVideos[section].add(v.snippet.resourceId.videoId);
-          wrapper.appendChild(createCard(v));
+        wrapper.className = type==='news'?'vertical-scroll':'scroll-row';
+        g.videos.forEach(v=>{
+          if (!loaded[type].has(v.snippet.resourceId.videoId)) {
+            loaded[type].add(v.snippet.resourceId.videoId);
+            wrapper.appendChild(createCard(v));
+          }
         });
-
-        container.appendChild(heading);
-        container.appendChild(wrapper);
-      }
+        cont.appendChild(heading);
+        cont.appendChild(wrapper);
+      });
     }
 
-    function toggleAuthForm(mode) {
-      document.getElementById("authForm").style.display = "block";
-      document.getElementById("authTitle").textContent = mode === "signup" ? "Signup" : "Login";
-      document.getElementById("authForm").setAttribute("data-mode", mode);
-      document.getElementById("authMessage").textContent = '';
-    }
-
-    function submitAuth() {
-      const mode = document.getElementById("authForm").getAttribute("data-mode");
-      const username = document.getElementById("authUsername").value.trim();
-      const password = document.getElementById("authPassword").value;
-      if (!username || !password) return showMsg("Fill all fields");
-      const users = JSON.parse(localStorage.getItem("users") || "{}");
-      if (mode === "signup") {
-        if (users[username]) return showMsg("User already exists");
-        users[username] = password;
-      } else {
-        if (users[username] !== password) return showMsg("Invalid credentials");
-      }
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("loggedInUser", username);
-      hideAuthUI();
-    }
-
-    function showMsg(msg) {
-      document.getElementById("authMessage").textContent = msg;
-    }
-
-    function hideAuthUI() {
-      document.getElementById("authForm").style.display = "none";
-      document.getElementById("loginBtn").style.display = "none";
-      document.getElementById("signupBtn").style.display = "none";
-      document.getElementById("logoutBtn").style.display = "inline-block";
-    }
-
-    function logout() {
-      localStorage.removeItem("loggedInUser");
-      document.getElementById("loginBtn").style.display = "inline-block";
-      document.getElementById("signupBtn").style.display = "inline-block";
-      document.getElementById("logoutBtn").style.display = "none";
-    }
-
-    function showModal(video) {
-      const vid = video.snippet.resourceId.videoId;
-      document.getElementById("modal-title").textContent = video.snippet.title;
-      document.getElementById("modal-video").innerHTML = <iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>;
-      document.getElementById("modal-description").textContent = video.snippet.description;
-      document.getElementById("modal-channel").innerHTML = <a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>;
-      document.getElementById("modal-comments").innerHTML = <a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments on YouTube</a>;
-      document.getElementById("videoModal").style.display = "flex";
+    function showModal(v) {
+      const vid = v.snippet.resourceId.videoId;
+      document.getElementById('modal-title').textContent = v.snippet.title;
+      document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+      document.getElementById('modal-description').textContent = v.snippet.description;
+      document.getElementById('modal-channel').innerHTML = `<a href="https://www.youtube.com/channel/${v.snippet.channelId}" target="_blank">Visit ${v.snippet.channelTitle}</a>`;
+      document.getElementById('modal-comments').innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments</a>`;
+      document.getElementById('videoModal').style.display='flex';
     }
 
     function closeModal() {
-      document.getElementById("videoModal").style.display = "none";
-      document.getElementById("modal-video").innerHTML = '';
+      document.getElementById('videoModal').style.display='none';
+      document.getElementById('modal-video').innerHTML='';
     }
 
     window.onload = () => {
-      if (localStorage.getItem("loggedInUser")) hideAuthUI();
-      loadGrouped("anim3", "anim3-videos");
-      loadGrouped("donghua", "donghua-videos");
-      loadGrouped("news", "news-videos");
+      loadGrouped('anim3','anim3-videos');
+      loadGrouped('donghua','donghua-videos');
+      loadGrouped('news','news-videos');
     };
   </script>
-  <!-- Only the <script> section is shown below for brevity.
-Place it at the end of your existing <body> -->
-<script>
-let pageTokens = { anim3: '', donghua: '', news: '' };
-const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
-
-function showScreen(id, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-async function fetchVideos(type) {
-  const res = await fetch(/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]});
-  const data = await res.json();
-  pageTokens[type] = data.nextPage || '';
-  return data;
-}
-
-function createCard(video) {
-  const card = document.createElement('div');
-  card.className = 'video-card';
-  const vid = video.snippet.resourceId.videoId;
-  const thumbnail = video.snippet.thumbnails.medium.url;
-  card.innerHTML = 
-    <div class="video-thumb">
-      <img src="${thumbnail}" alt="${video.snippet.title}" />
-    </div>
-    <div class="video-title">${video.snippet.title}</div>
-  ;
-  card.querySelector('img').onclick = () => showModal(video);
-  return card;
-}
-
-async function loadGrouped(section, containerId) {
-  const container = document.getElementById(containerId);
-  const loading = container.previousElementSibling;
-  loading.textContent = "Loading...";
-  const data = await fetchVideos(section);
-  loading.style.display = 'none';
-
-  const allGroups = [];
-
-  // Extract and insert the "LATEST" group
-  const latestVideos = [...(data.latest || [])].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).slice(0, 20);
-  // Render LATEST group
-if (data.latest && data.latest.length) {
-  const latestHeading = document.createElement('div');
-  latestHeading.className = 'group-heading';
-  latestHeading.style.backgroundColor = 'red';
-  latestHeading.style.color = 'black';
-  latestHeading.textContent = 'LATEST';
-
-  const latestWrapper = document.createElement('div');
-  latestWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-  data.latest.forEach(v => {
-    if (!loadedVideos[section].has(v.snippet.resourceId.videoId)) {
-      loadedVideos[section].add(v.snippet.resourceId.videoId);
-      latestWrapper.appendChild(createCard(v));
-    }
-  });
-
-  container.appendChild(latestHeading);
-  container.appendChild(latestWrapper);
-}
-
-  if (latestVideos.length) {
-    const latestWrapper = document.createElement('div');
-    latestWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-    const latestHeading = document.createElement('div');
-    latestHeading.className = 'group-heading';
-    latestHeading.style.background = 'red';
-    latestHeading.style.color = 'black';
-    latestHeading.textContent = 'LATEST';
-
-    latestVideos.forEach(v => {
-      loadedVideos[section].add(v.snippet.resourceId.videoId);
-      latestWrapper.appendChild(createCard(v));
-    });
-
-    container.appendChild(latestHeading);
-    container.appendChild(latestWrapper);
-  }
-
-  // All other groups sorted by latest publish date
-  if (section !== 'news') {
-    for (const groupName of Object.keys(data.grouped || {})) {
-      const vids = data.grouped[groupName].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-      if (vids.length) {
-        const latest = Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()));
-        allGroups.push({ name: groupName, videos: vids, latest });
-      }
-    }
-  }
-
-  const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-  if (mixed.length) {
-    const latest = Math.max(...mixed.map(v => new Date(v.snippet.publishedAt).getTime()));
-    allGroups.push({ name: 'Mixed', videos: mixed, latest });
-  }
-
-  allGroups.sort((a, b) => b.latest - a.latest);
-
-  for (const group of allGroups) {
-    const heading = document.createElement('div');
-    heading.className = 'group-heading';
-    heading.textContent = group.name;
-    const wrapper = document.createElement('div');
-    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-    group.videos.forEach(v => {
-      loadedVideos[section].add(v.snippet.resourceId.videoId);
-      wrapper.appendChild(createCard(v));
-    });
-
-    container.appendChild(heading);
-    container.appendChild(wrapper);
-  }
-}
-
-// Modal and Auth (unchanged code from your existing script)
-</script>
-
 </body>
 </html>
