@@ -104,49 +104,92 @@
   }
 
   async function loadGrouped(section, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    document.querySelector(`#${section}-videos ~ .loading`).textContent = 'Loading...';
-    const data = await fetchVideos(section);
-    document.querySelector(`#${section}-videos ~ .loading`).textContent = '';
+  const container = document.getElementById(containerId);
+  const loading = container.previousElementSibling;
+  if (loading) loading.textContent = "Loading...";
 
-    // LATEST group
-    if (section !== 'news' && data.latest) {
-      const lis = data.latest.filter(v=>!loaded[section].has(v.snippet.resourceId.videoId));
-      if(lis.length){
-        const hd = document.createElement('div'); hd.className='group-heading red'; hd.textContent='LATEST';
-        const wr = document.createElement('div'); wr.className = section==='news'?'vertical-scroll':'scroll-row';
-        lis.forEach(v=>{loaded[section].add(v.snippet.resourceId.videoId);wr.appendChild(createCard(v));});
-        container.appendChild(hd); container.appendChild(wr);
-      }
-    }
+  const data = await fetchVideos(section);
+  console.log('=== Section:', section, 'Data keys:', Object.keys(data));
+  if (section === 'donghua') console.log('Donghua raw data:', data);
 
-    // Donghua group sorting
-    if(section==='donghua' && data.grouped){
-      const groups = Object.entries(data.grouped).map(([n,vs])=>{
-        const arr = vs.filter(v=>!loaded.donghua.has(v.snippet.resourceId.videoId));
-        if(!arr.length) return null;
-        const latestTs = Math.max(...arr.map(v=>new Date(v.snippet.publishedAt).getTime()));
-        return {name:n, vids:arr, latestTs};
-      }).filter(Boolean).sort((a,b)=>b.latestTs - a.latestTs);
+  if (loading) loading.style.display = 'none';
 
-      for(const g of groups){
-        const hd = document.createElement('div'); hd.className='group-heading'; hd.textContent=g.name;
-        const wr = document.createElement('div'); wr.className='scroll-row';
-        g.vids.forEach(v=>{loaded.donghua.add(v.snippet.resourceId.videoId);wr.appendChild(createCard(v));});
-        container.appendChild(hd); container.appendChild(wr);
-      }
-    }
+  // Reset container (optional: useful during testing)
+  container.innerHTML = '';
 
-    // Mixed group
-    const mix = (data.mixed||[]).filter(v=>!loaded[section].has(v.snippet.resourceId.videoId));
-    if(mix.length){
-      const hd = document.createElement('div'); hd.className='group-heading'; hd.textContent='Mixed';
-      const wr = document.createElement('div'); wr.className= section==='news'?'vertical-scroll':'scroll-row';
-      mix.forEach(v=>{loaded[section].add(v.snippet.resourceId.videoId);wr.appendChild(createCard(v));});
-      container.appendChild(hd); container.appendChild(wr);
+  // ✅ Render 'LATEST' group if available
+  if (data.latest && data.latest.length) {
+    const heading = document.createElement('div');
+    heading.className = 'group-heading';
+    heading.style.backgroundColor = 'red';
+    heading.style.color = 'black';
+    heading.textContent = 'LATEST';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+    data.latest.forEach(v => {
+      loadedVideos[section].add(v.snippet.resourceId.videoId);
+      wrapper.appendChild(createCard(v));
+    });
+
+    container.appendChild(heading);
+    container.appendChild(wrapper);
+  }
+
+  // ✅ Donghua: sort grouped by most recent video in each group
+  if (section === 'donghua' && data.grouped) {
+    const sortedGroups = Object.entries(data.grouped)
+      .filter(([, vids]) => vids.length)
+      .map(([key, vids]) => ({
+        key,
+        vids,
+        latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
+      }))
+      .sort((a, b) => b.latestTime - a.latestTime);
+
+    console.log('Sorted donghua groups:', sortedGroups.map(g => g.key));
+
+    for (const group of sortedGroups) {
+      const heading = document.createElement('div');
+      heading.className = 'group-heading';
+      heading.textContent = group.key;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'scroll-row';
+
+      group.vids.forEach(v => {
+        if (!loadedVideos[section].has(v.snippet.resourceId.videoId)) {
+          loadedVideos[section].add(v.snippet.resourceId.videoId);
+          wrapper.appendChild(createCard(v));
+        }
+      });
+
+      container.appendChild(heading);
+      container.appendChild(wrapper);
     }
   }
+
+  // ✅ Render 'Mixed' group (if any left)
+  const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+  if (mixed.length) {
+    const heading = document.createElement('div');
+    heading.className = 'group-heading';
+    heading.textContent = 'Mixed';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+    mixed.forEach(v => {
+      loadedVideos[section].add(v.snippet.resourceId.videoId);
+      wrapper.appendChild(createCard(v));
+    });
+
+    container.appendChild(heading);
+    container.appendChild(wrapper);
+  }
+}
+
 
   function showModal(v){
     const vid = v.snippet.resourceId.videoId;
