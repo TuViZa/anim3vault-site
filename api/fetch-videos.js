@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   let items = [], pageToken = '';
   try {
     do {
-      const ytRes = await fetch(https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY});
+      const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
       const data = await ytRes.json();
       if (!data.items) break;
       items.push(...data.items);
