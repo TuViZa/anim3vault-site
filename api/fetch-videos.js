@@ -92,22 +92,18 @@ export default async function handler(req, res) {
     sortedGrouped[group.name] = group.videos;
   }
 
-  // ✅ ADD THIS LOG LINE HERE:
   console.log("Donghua groups:", Object.entries(sortedGrouped).map(([k, v]) => [k, v.length]));
 
   return res.status(200).json({ latest, mixed, grouped: sortedGrouped });
 }
 
+// For anim3 or news
+return res.status(200).json({
+  latest: type === "anim3" ? latest : [],
+  mixed,
+  grouped: {}
+});
 
-      return res.status(200).json({ latest, mixed, grouped: sortedGrouped });
-    }
-
-    // For anim3 or news
-    return res.status(200).json({
-      latest: type === "anim3" ? latest : [],
-      mixed,
-      grouped: {}
-    });
 
   } catch (e) {
     console.error("Fetch error:", e);
