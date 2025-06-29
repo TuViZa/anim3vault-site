@@ -17,7 +17,7 @@ const DONGHUA_TITLES = [
   "mo-tian records", "lord of mysteries", "above the kingdom of god"
 ];
 
-// Helper to normalize titles for better fuzzy matching
+// Helper to normalize strings for fuzzy matching
 function normalize(str) {
   return str.toLowerCase().replace(/[^a-z0-9]/gi, '');
 }
@@ -34,8 +34,14 @@ export default async function handler(req, res) {
     const grouped = {};
     const mixed = [];
 
+    // Prepare map of normalizedTitle -> originalTitle
+    const titleMap = {};
     if (type === "donghua") {
-      for (let keyword of DONGHUA_TITLES) grouped[keyword] = [];
+      for (let keyword of DONGHUA_TITLES) {
+        const key = normalize(keyword);
+        grouped[key] = [];
+        titleMap[key] = keyword;  // Preserve display name
+      }
     }
 
     for (let v of allItems) {
@@ -46,8 +52,9 @@ export default async function handler(req, res) {
       let matched = false;
       if (type === "donghua") {
         for (let keyword of DONGHUA_TITLES) {
-          if (normalize(title).includes(normalize(keyword))) {
-            grouped[keyword].push(v);
+          const key = normalize(keyword);
+          if (normalize(title).includes(key)) {
+            grouped[key].push(v);
             matched = true;
             break;
           }
@@ -61,8 +68,8 @@ export default async function handler(req, res) {
     if (type === "donghua") {
       const sortedGroups = Object.entries(grouped)
         .filter(([_, vids]) => vids.length > 0)
-        .map(([name, vids]) => ({
-          name,
+        .map(([key, vids]) => ({
+          name: titleMap[key] || key, // use original title for display
           videos: vids.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)),
           latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
         }))
