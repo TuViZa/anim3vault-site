@@ -40,8 +40,7 @@ export default async function handler(req, res) {
     const mixed = [];
     const latest = [];
 
-    // Only define donghua groups when type is 'donghua'
-    if (type === 'donghua') {
+    if (type === "donghua") {
       for (let keyword of DONGHUA_TITLES) {
         grouped[keyword] = [];
       }
@@ -52,8 +51,8 @@ export default async function handler(req, res) {
       const id = v.snippet?.resourceId?.videoId;
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
-      if (type === 'donghua') {
-        let matched = false;
+      let matched = false;
+      if (type === "donghua") {
         for (let keyword of DONGHUA_TITLES) {
           if (titleMatches(title, keyword)) {
             grouped[keyword].push(v);
@@ -61,20 +60,15 @@ export default async function handler(req, res) {
             break;
           }
         }
-        if (!matched) mixed.push(v);
-      } else {
-        mixed.push(v);
       }
-
+      if (!matched) mixed.push(v);
       addedIds.add(id);
     }
 
-    // Always include latest top 20
-    latest.push(...items
+    latest.push(...[...items]
       .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
-      .slice(0, 20)
-    );
+      .slice(0, 20));
 
     return res.status(200).json({ grouped, mixed, latest });
   } catch (e) {
