@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -11,6 +11,7 @@
       background: #000;
       color: white;
       overflow-x: hidden;
+      overflow-y: hidden; /* Prevent full-page scroll */
     }
 
     header {
@@ -82,6 +83,8 @@
     .screen {
       display: none;
       padding: 10px;
+      height: calc(100vh - 60px);
+      overflow: hidden;
     }
 
     .screen.active {
@@ -100,13 +103,15 @@
       background-color: #000;
       display: flex;
       justify-content: flex-end;
+      align-items: flex-start;
     }
 
-    #news-videos {
+    .news-wrapper {
       width: 320px;
-      max-height: 100vh;
+      height: 100%;
       overflow-y: auto;
       padding: 10px;
+      background: #1a1a1a;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -227,11 +232,8 @@
   </div>
 
   <div id="news" class="screen">
-  <div class="news-wrapper">
-    <div id="news-videos"></div>
+    <div class="news-wrapper" id="news-videos"></div>
   </div>
-</div>
-
 
   <div id="videoModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
