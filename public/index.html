@@ -11,7 +11,6 @@
       background: #000;
       color: white;
       overflow-x: hidden;
-      overflow-y: hidden; /* Prevent full-page scroll */
     }
 
     header {
@@ -23,7 +22,6 @@
       font-size: 1.8em;
       font-weight: bold;
       text-align: center;
-      color: white;
     }
 
     .auth-buttons {
@@ -84,7 +82,7 @@
       display: none;
       padding: 10px;
       height: calc(100vh - 60px);
-      overflow: hidden;
+      overflow-y: auto;
     }
 
     .screen.active {
@@ -155,6 +153,11 @@
       margin: 20px 0 10px 0;
     }
 
+    .group-heading.latest {
+      background: red;
+      color: black;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -217,8 +220,8 @@
 
   <div class="nav-buttons">
     <a class="btn" onclick="showScreen('anim3', this)">Anim3</a>
-    <a class="btn active" onclick="showScreen('donghua', this)">Donghu@</a>
-    <a class="btn" onclick="showScreen('news', this)">New$</a>
+    <a class="btn active" onclick="showScreen('donghua', this)">Donghua</a>
+    <a class="btn" onclick="showScreen('news', this)">News</a>
   </div>
 
   <div id="anim3" class="screen">
@@ -286,43 +289,32 @@
       const data = await fetchVideos(section);
       if (loading) loading.style.display = 'none';
 
+      const appendGroup = (title, videos, isLatest = false) => {
+        if (!videos.length) return;
+        const heading = document.createElement('div');
+        heading.className = 'group-heading' + (isLatest ? ' latest' : '');
+        heading.textContent = title;
+        const wrapper = document.createElement('div');
+        wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+        videos.forEach(v => {
+          loadedVideos[section].add(v.snippet.resourceId.videoId);
+          wrapper.appendChild(createCard(v));
+        });
+        container.appendChild(heading);
+        container.appendChild(wrapper);
+      };
+
+      appendGroup("LATEST", (data.latest || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)), true);
+
       if (section !== 'news') {
         for (const group of Object.keys(data.grouped || {}).sort()) {
           const vids = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-          if (!vids.length) continue;
-
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = group;
-          const wrapper = document.createElement('div');
-          wrapper.className = 'scroll-row';
-
-          vids.forEach(v => {
-            loadedVideos[section].add(v.snippet.resourceId.videoId);
-            wrapper.appendChild(createCard(v));
-          });
-
-          container.appendChild(heading);
-          container.appendChild(wrapper);
+          appendGroup(group, vids);
         }
       }
 
       const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-      if (mixed.length) {
-        const heading = document.createElement('div');
-        heading.className = 'group-heading';
-        heading.textContent = 'Mixed';
-        const wrapper = document.createElement('div');
-        wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-        mixed.forEach(v => {
-          loadedVideos[section].add(v.snippet.resourceId.videoId);
-          wrapper.appendChild(createCard(v));
-        });
-
-        container.appendChild(heading);
-        container.appendChild(wrapper);
-      }
+      appendGroup("Mixed", mixed);
     }
 
     function toggleAuthForm(mode) {
