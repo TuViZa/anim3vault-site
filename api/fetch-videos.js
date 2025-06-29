@@ -19,6 +19,9 @@ const DONGHUA_TITLES = [
 function titleMatches(title, keyword) {
   return title.toLowerCase().includes(keyword.toLowerCase());
 }
+function normalize(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]/gi, '');
+}
 
 export default async function handler(req, res) {
   const { type = "donghua" } = req.query;
@@ -55,10 +58,10 @@ export default async function handler(req, res) {
       let matched = false;
       if (type === "donghua") {
         for (let keyword of DONGHUA_TITLES) {
-  if (title.toLowerCase().includes(keyword.toLowerCase())) {
-    grouped[keyword].push(v);
-    matched = true;
-  }
+  if (normalize(title).includes(normalize(keyword))) {
+  grouped[keyword].push(v);
+  matched = true;
+}
 }
 
       }
