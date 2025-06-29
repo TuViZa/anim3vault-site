@@ -59,11 +59,22 @@ header {
   text-transform: capitalize;
 }
 
+.group-heading.red {
+  background: red;
+  color: black;
+  padding: 10px 16px;
+  font-size: 1.2em;
+  font-weight: bold;
+  width: 100%;
+  margin: 20px 0 10px 0;
+}
+
 .scroll-row {
   display: flex;
   overflow-x: auto;
   gap: 16px;
   scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
   padding-bottom: 10px;
   padding-left: 5px;
 }
@@ -86,28 +97,27 @@ header {
   border-radius: 10px;
   overflow: hidden;
   flex: 0 0 auto;
-  width: 280px;
+  width: 240px;
   scroll-snap-align: start;
 }
 
 .video-thumb {
   position: relative;
   width: 100%;
-  padding-top: 56.25%;
+  padding-top: 0;
   background: #000;
 }
 
-.video-thumb iframe {
-  position: absolute;
-  top: 0; left: 0;
+.video-thumb img {
   width: 100%;
-  height: 100%;
-  border: none;
+  height: 160px;
+  object-fit: cover;
+  display: block;
 }
 
 .video-title {
-  padding: 10px;
-  font-size: 0.95em;
+  padding: 8px;
+  font-size: 0.9em;
   text-align: center;
 }
 
@@ -116,8 +126,6 @@ header {
   padding: 20px;
   font-size: 1.2em;
 }
-
-/* NEW STYLES ADDED BELOW */
 
 /* Load More Button */
 .load-more {
@@ -160,18 +168,17 @@ header {
   background: #222;
 }
 
-/* Target vertical scroll for News only */
+/* News scroll area */
 #news-videos {
   display: flex;
   flex-direction: column;
-  align-items: flex-end; /* 👈 Align videos to the right */
+  align-items: flex-end;
   gap: 16px;
   max-height: 70vh;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 10px;
 }
-
 
 #news-videos::-webkit-scrollbar {
   width: 6px;
@@ -182,16 +189,6 @@ header {
 }
 #news-videos::-webkit-scrollbar-track {
   background: #222;
-}
-
-/* Leave scroll-row styles as-is for horizontal sections */
-.scroll-row {
-  display: flex;
-  overflow-x: auto;
-  gap: 16px;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 10px;
-  padding-left: 5px;
 }
 
 .auth-buttons {
@@ -226,32 +223,6 @@ header {
   flex-direction: column;
   gap: 10px;
 }
-.video-thumb {
-  position: relative;
-  width: 100%;
-  padding-top: 0; /* remove aspect ratio padding */
-  background: #000;
-}
-
-.video-thumb img {
-  width: 100%;
-  height: 160px; /* Reduce from full height to a fixed smaller one */
-  object-fit: cover;
-  display: block;
-}
-.video-card {
-  background: #1a1a1a;
-  border-radius: 10px;
-  overflow: hidden;
-  flex: 0 0 auto;
-  width: 240px; /* You can reduce from 280px if desired */
-  scroll-snap-align: start;
-}
-.video-title {
-  padding: 8px;
-  font-size: 0.9em;
-  text-align: center;
-}
 
 .modal {
   display: none;
@@ -283,6 +254,7 @@ header {
 .close-btn:hover {
   color: #f0f;
 }
+
 .video-container {
   position: relative;
   width: 100%;
@@ -299,6 +271,7 @@ header {
   top: 0;
   left: 0;
 }
+
 @media screen and (max-width: 768px) {
   .video-card {
     width: 90%;
@@ -312,10 +285,16 @@ header {
     height: 95%;
     overflow-y: auto;
   }
+  .group-heading {
+    font-size: 1.1em;
+    padding-left: 10px;
+    margin-top: 16px;
+  }
 }
+
 .responsive-video {
   position: relative;
-  padding-top: 56.25%; /* 16:9 aspect ratio */
+  padding-top: 56.25%;
   height: 0;
   overflow: hidden;
 }
@@ -326,10 +305,4 @@ header {
   left: 0;
   width: 100%;
   height: 100%;
-}
-#news-videos {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end; /* Align to right */
-  padding-right: 10px;
 }
