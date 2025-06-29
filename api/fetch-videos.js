@@ -41,8 +41,11 @@ export default async function handler(req, res) {
     const latest = [];
     const mixed = [];
 
-    for (let keyword of DONGHUA_TITLES) {
-      grouped[keyword] = [];
+    // Grouping only for donghua
+    if (type === "donghua") {
+      for (let keyword of DONGHUA_TITLES) {
+        grouped[keyword] = [];
+      }
     }
 
     for (let v of items) {
@@ -50,24 +53,35 @@ export default async function handler(req, res) {
       const id = v.snippet?.resourceId?.videoId;
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
-      let matched = false;
-      for (let keyword of DONGHUA_TITLES) {
-        if (titleMatches(title, keyword)) {
-          grouped[keyword].push(v);
-          matched = true;
-          break;
-        }
-      }
-      if (!matched && type !== "donghua") mixed.push(v); // omit mixed for donghua
       addedIds.add(id);
+
+      if (type === "donghua") {
+        let matched = false;
+        for (let keyword of DONGHUA_TITLES) {
+          if (titleMatches(title, keyword)) {
+            grouped[keyword].push(v);
+            matched = true;
+            break;
+          }
+        }
+        // if no match, ignore it
+      } else {
+        mixed.push(v); // For anim3 and news, everything goes to mixed
+      }
     }
 
-    latest.push(...[...items]
+    latest.push(...items
       .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
-      .slice(0, 20));
+      .slice(0, 20)
+    );
 
-    return res.status(200).json({ grouped, latest, mixed });
+    return res.status(200).json({
+      grouped: type === "donghua" ? grouped : {},
+      latest,
+      mixed
+    });
+
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
