@@ -3,17 +3,18 @@ const API_KEY = process.env.YT_API_KEY;
 const PLAYLISTS = {
   donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
   news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae",
-  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk" // ✅ Anime playlist added here
+  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk"
 };
 
 const DONGHUA_TITLES = [
   "Unusual News from the City of sky", "Heaven swallow", "Wukong", "Against the sky supreme",
   "Supreme god emperor", "Swallowed star", "Stellar transformations", "My senior brother is too strong",
   "Ten thousand worlds", "One hundred thousand years of Qi Training", "Martial master",
-  "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "The immortal Doctor in Modern City",
-  "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect worlds",
+  "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "immortal Doctor in Modern City",
+  "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect world",
   "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
-  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul"
+  "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul",
+  "mo-tian records", "lord of mysteries", "above the kingdom of god"
 ];
 
 function titleMatches(title, keyword) {
@@ -38,9 +39,13 @@ export default async function handler(req, res) {
     const addedIds = new Set();
     const grouped = {};
     const mixed = [];
+    const latest = [];
 
-    for (let keyword of DONGHUA_TITLES) {
-      grouped[keyword] = [];
+    // Initialize groups (for donghua only)
+    if (type === "donghua") {
+      for (let keyword of DONGHUA_TITLES) {
+        grouped[keyword] = [];
+      }
     }
 
     for (let v of items) {
@@ -49,18 +54,54 @@ export default async function handler(req, res) {
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
       let matched = false;
-      for (let keyword of DONGHUA_TITLES) {
-        if (titleMatches(title, keyword)) {
-          grouped[keyword].push(v);
-          matched = true;
-          break;
+      if (type === "donghua") {
+        for (let keyword of DONGHUA_TITLES) {
+          if (titleMatches(title, keyword)) {
+            grouped[keyword].push(v);
+            matched = true;
+            break;
+          }
         }
       }
+
       if (!matched) mixed.push(v);
       addedIds.add(id);
     }
 
-    return res.status(200).json({ grouped, mixed });
+    // Add LATEST for anim3 or donghua
+    if (type === "donghua" || type === "anim3") {
+      const sorted = [...items].filter(v => v.snippet?.publishedAt).sort((a, b) =>
+        new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)
+      );
+      latest.push(...sorted.slice(0, 20));
+    }
+
+    // Sort group order (donghua only) based on newest video timestamp
+    if (type === "donghua") {
+      const sortedGroups = Object.entries(grouped)
+        .filter(([_, vids]) => vids.length > 0)
+        .map(([name, vids]) => ({
+          name,
+          videos: vids.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)),
+          latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
+        }))
+        .sort((a, b) => b.latestTime - a.latestTime);
+
+      const sortedGrouped = {};
+      for (const group of sortedGroups) {
+        sortedGrouped[group.name] = group.videos;
+      }
+
+      return res.status(200).json({ latest, mixed, grouped: sortedGrouped });
+    }
+
+    // For anim3 or news
+    return res.status(200).json({
+      latest: type === "anim3" ? latest : [],
+      mixed,
+      grouped: {}
+    });
+
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
