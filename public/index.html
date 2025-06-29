@@ -272,22 +272,24 @@
       let mixed = [];
 
       // LATEST (anim3 & donghua only)
-      if (section !== 'news' && Array.isArray(data.latest)) {
-        const latest = data.latest.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-        if (latest.length) {
-          const heading = document.createElement('div');
-          heading.className = 'group-heading red';
-          heading.textContent = 'LATEST';
-          const wrapper = document.createElement('div');
-          wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-          latest.forEach(v => {
-            loadedVideos[section].add(v.snippet.resourceId.videoId);
-            wrapper.appendChild(createCard(v));
-          });
-          container.appendChild(heading);
-          container.appendChild(wrapper);
-        }
-      }
+      if (section === 'donghua') {
+  // Treat all videos as one mixed or grouped
+  const allVideos = [...(data.latest || []), ...(data.mixed || [])].filter(v => !loadedVideos.donghua.has(v.snippet.resourceId.videoId));
+  if (allVideos.length) {
+    const heading = document.createElement('div');
+    heading.className = 'group-heading';
+    heading.textContent = 'All Donghua';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'scroll-row';
+    allVideos.forEach(v => {
+      loadedVideos.donghua.add(v.snippet.resourceId.videoId);
+      wrapper.appendChild(createCard(v));
+    });
+    container.appendChild(heading);
+    container.appendChild(wrapper);
+  }
+}
+
 
       // Mixed group for all sections (anim3, donghua, news)
       mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
