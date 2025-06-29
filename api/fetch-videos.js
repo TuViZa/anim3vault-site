@@ -22,68 +22,60 @@ function titleMatches(title, keyword) {
 }
 
 export default async function handler(req, res) {
-  const { type = "donghua" } = req.query;
+  const type = req.query.type;
   const playlistId = PLAYLISTS[type];
-  if (!playlistId) return res.status(400).json({ error: 'Invalid playlist type.' });
+  if (!playlistId) return res.status(400).json({ error: "Invalid type." });
 
-  let items = [], pageToken = '';
+  let items = [], pageToken = "";
   try {
     do {
-      const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
-      const data = await ytRes.json();
+      const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`;
+      const data = await fetch(url).then(r => r.json());
       if (!data.items) break;
       items.push(...data.items);
-      pageToken = data.nextPageToken || '';
+      pageToken = data.nextPageToken || "";
     } while (pageToken);
 
-    const addedIds = new Set();
+    const added = new Set();
     const grouped = {};
-    const latest = [];
     const mixed = [];
+    const latest = items
+      .filter(v => v.snippet?.resourceId?.videoId && v.snippet.publishedAt)
+      .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
+      .slice(0, 20);
 
-    // Grouping only for donghua
     if (type === "donghua") {
-      for (let keyword of DONGHUA_TITLES) {
-        grouped[keyword] = [];
-      }
+      DONGHUA_TITLES.forEach(t => grouped[t] = []);
     }
 
-    for (let v of items) {
-      const title = v.snippet?.title || "";
-      const id = v.snippet?.resourceId?.videoId;
-      if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
-
-      addedIds.add(id);
+    for (const v of items) {
+      const title = v.snippet.title;
+      const vid = v.snippet.resourceId.videoId;
+      if (!title || !vid || added.has(vid)) continue;
+      added.add(vid);
 
       if (type === "donghua") {
         let matched = false;
-        for (let keyword of DONGHUA_TITLES) {
-          if (titleMatches(title, keyword)) {
-            grouped[keyword].push(v);
+        for (const kw of DONGHUA_TITLES) {
+          if (titleMatches(title, kw)) {
+            grouped[kw].push(v);
             matched = true;
             break;
           }
         }
-        // if no match, ignore it
+        if (!matched) mixed.push(v);
       } else {
-        mixed.push(v); // For anim3 and news, everything goes to mixed
+        mixed.push(v);
       }
     }
 
-    latest.push(...items
-      .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
-      .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
-      .slice(0, 20)
-    );
-
     return res.status(200).json({
-      grouped: type === "donghua" ? grouped : {},
       latest,
+      grouped: type === "donghua" ? grouped : {},
       mixed
     });
-
   } catch (e) {
-    console.error("Fetch error:", e);
-    return res.status(500).json({ error: e.message });
+    console.error(e);
+    return res.status(500).json({ error: e.toString() });
   }
 }
