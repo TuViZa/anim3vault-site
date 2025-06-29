@@ -71,17 +71,23 @@
     .screen.active {
       display: block;
     }
-    .scroll-row, .vertical-scroll {
+    .scroll-row {
       display: flex;
-      flex-wrap: wrap;
+      overflow-x: auto;
       gap: 16px;
-      justify-content: center;
+      padding-bottom: 10px;
+    }
+    .vertical-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
     .video-card {
       background: #1a1a1a;
       border-radius: 10px;
       overflow: hidden;
       width: 280px;
+      flex-shrink: 0;
     }
     .video-thumb img {
       width: 100%;
@@ -94,7 +100,12 @@
       padding: 10px;
       text-align: center;
     }
-
+    .group-heading {
+      font-size: 1.3em;
+      margin: 10px 0;
+      font-weight: bold;
+      color: #f0f;
+    }
     .modal {
       display: none;
       position: fixed;
@@ -159,12 +170,12 @@
 
   <div id="anim3" class="screen active">
     <div class="loading">Loading Anim3 videos...</div>
-    <div class="scroll-row" id="anim3-videos"></div>
+    <div id="anim3-videos"></div>
     <button class="load-more" onclick="loadMore('anim3')">Load More</button>
   </div>
   <div id="donghua" class="screen">
     <div class="loading">Loading Donghua videos...</div>
-    <div id="donghua-videos" class="scroll-row"></div>
+    <div id="donghua-videos"></div>
     <button class="load-more" onclick="loadMore('donghua')">Load More</button>
   </div>
   <div id="news" class="screen">
@@ -224,12 +235,15 @@
       loading.textContent = "Loading...";
       const data = await fetchVideos(section);
       loading.style.display = 'none';
+      const wrapper = document.createElement('div');
+      wrapper.className = 'scroll-row';
       data.mixed.forEach(v => {
         const id = v.snippet.resourceId.videoId;
         if (loadedVideos[section].has(id)) return;
         loadedVideos[section].add(id);
-        container.appendChild(createCard(v));
+        wrapper.appendChild(createCard(v));
       });
+      container.appendChild(wrapper);
     }
 
     async function loadGrouped(section, containerId) {
@@ -238,16 +252,37 @@
       loading.textContent = "Loading...";
       const data = await fetchVideos(section);
       loading.style.display = 'none';
+
       for (const group of Object.keys(data.grouped).sort()) {
+        const heading = document.createElement('div');
+        heading.className = 'group-heading';
+        heading.textContent = group;
         const groupWrapper = document.createElement('div');
-        groupWrapper.className = 'scroll-row';
+        groupWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
         data.grouped[group].forEach(v => {
           const id = v.snippet.resourceId.videoId;
           if (loadedVideos[section].has(id)) return;
           loadedVideos[section].add(id);
           groupWrapper.appendChild(createCard(v));
         });
+        container.appendChild(heading);
         container.appendChild(groupWrapper);
+      }
+
+      if (data.mixed && data.mixed.length) {
+        const heading = document.createElement('div');
+        heading.className = 'group-heading';
+        heading.textContent = 'Mixed';
+        const row = document.createElement('div');
+        row.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+        data.mixed.forEach(v => {
+          const id = v.snippet.resourceId.videoId;
+          if (loadedVideos[section].has(id)) return;
+          loadedVideos[section].add(id);
+          row.appendChild(createCard(v));
+        });
+        container.appendChild(heading);
+        container.appendChild(row);
       }
     }
 
@@ -256,13 +291,13 @@
       else loadGrouped(type, `${type}-videos`);
     }
 
-    // Login/Signup logic
     function toggleAuthForm(mode) {
       document.getElementById("authForm").style.display = "block";
       document.getElementById("authTitle").textContent = mode === "signup" ? "Signup" : "Login";
       document.getElementById("authForm").setAttribute("data-mode", mode);
       document.getElementById("authMessage").textContent = '';
     }
+
     function submitAuth() {
       const mode = document.getElementById("authForm").getAttribute("data-mode");
       const username = document.getElementById("authUsername").value.trim();
@@ -279,15 +314,18 @@
       localStorage.setItem("loggedInUser", username);
       hideAuthUI();
     }
+
     function showMsg(msg) {
       document.getElementById("authMessage").textContent = msg;
     }
+
     function hideAuthUI() {
       document.getElementById("authForm").style.display = "none";
       document.getElementById("loginBtn").style.display = "none";
       document.getElementById("signupBtn").style.display = "none";
       document.getElementById("logoutBtn").style.display = "inline-block";
     }
+
     function logout() {
       localStorage.removeItem("loggedInUser");
       document.getElementById("loginBtn").style.display = "inline-block";
