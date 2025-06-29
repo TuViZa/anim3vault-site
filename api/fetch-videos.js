@@ -27,7 +27,6 @@ export default async function handler(req, res) {
 
   let items = [], pageToken = '';
   try {
-    // Fetch all videos in the playlist (in batches of 50)
     do {
       const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&pageToken=${pageToken}&key=${API_KEY}`);
       const data = await ytRes.json();
@@ -41,39 +40,43 @@ export default async function handler(req, res) {
     const mixed = [];
     const latest = [];
 
-    for (const keyword of DONGHUA_TITLES) {
-      grouped[keyword] = [];
+    // Only define donghua groups when type is 'donghua'
+    if (type === 'donghua') {
+      for (let keyword of DONGHUA_TITLES) {
+        grouped[keyword] = [];
+      }
     }
 
-    for (const v of items) {
+    for (let v of items) {
       const title = v.snippet?.title || "";
       const id = v.snippet?.resourceId?.videoId;
+      if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
-      if (!title || !id || addedIds.has(id)) continue;
-      if (title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private")) continue;
-
-      let matched = false;
-      for (const keyword of DONGHUA_TITLES) {
-        if (titleMatches(title, keyword)) {
-          grouped[keyword].push(v);
-          matched = true;
-          break;
+      if (type === 'donghua') {
+        let matched = false;
+        for (let keyword of DONGHUA_TITLES) {
+          if (titleMatches(title, keyword)) {
+            grouped[keyword].push(v);
+            matched = true;
+            break;
+          }
         }
+        if (!matched) mixed.push(v);
+      } else {
+        mixed.push(v);
       }
 
-      if (!matched) mixed.push(v);
       addedIds.add(id);
     }
 
-    // Collect the 20 latest videos overall
-    latest.push(...[...items]
+    // Always include latest top 20
+    latest.push(...items
       .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
       .slice(0, 20)
     );
 
     return res.status(200).json({ grouped, mixed, latest });
-
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
