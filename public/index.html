@@ -70,22 +70,21 @@
       }
     }
 
-    function createCard(video) {
+   function createCard(video) {
   const card = document.createElement('div');
   card.className = 'video-card';
   const vid = video.snippet.resourceId.videoId;
-  const thumbUrl = video.snippet.thumbnails.medium.url;
-
+  const thumbnail = video.snippet.thumbnails.medium.url;
   card.innerHTML = `
-    <a href="https://www.youtube.com/watch?v=${vid}" target="_blank">
-      <div class="video-thumb">
-        <img src="${thumbUrl}" alt="${video.snippet.title}" loading="lazy" />
-      </div>
-      <div class="video-title">${video.snippet.title}</div>
-    </a>
+    <div class="video-thumb">
+      <img src="${thumbnail}" alt="${video.snippet.title}" style="width:100%; cursor:pointer;" />
+    </div>
+    <div class="video-title">${video.snippet.title}</div>
   `;
+  card.querySelector('img').addEventListener('click', () => showModal(video));
   return card;
 }
+
 
 
     const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
@@ -217,5 +216,49 @@
       }
     };
   </script>
+  <script>
+function showModal(video) {
+  const vid = video.snippet.resourceId.videoId;
+  const title = video.snippet.title;
+  const description = video.snippet.description;
+  const channelTitle = video.snippet.channelTitle;
+  const channelId = video.snippet.channelId;
+
+  document.getElementById("modal-title").textContent = title;
+  document.getElementById("modal-video").innerHTML = `
+    <iframe width="100%" height="400" src="https://www.youtube.com/embed/${vid}" 
+      frameborder="0" allowfullscreen></iframe>
+  `;
+  document.getElementById("modal-description").textContent = description;
+  document.getElementById("modal-channel").innerHTML = `
+    <a href="https://www.youtube.com/channel/${channelId}" target="_blank" style="color:#f0f;">
+      Visit ${channelTitle}'s channel
+    </a>
+  `;
+  document.getElementById("modal-comments").innerHTML = `
+    <iframe width="100%" height="300" src="https://www.youtube.com/watch?v=${vid}" 
+      frameborder="0"></iframe>
+  `;
+
+  document.getElementById("videoModal").style.display = "block";
+}
+
+function closeModal() {
+  document.getElementById("videoModal").style.display = "none";
+  document.getElementById("modal-video").innerHTML = '';
+}
+</script>
+
+  <div id="videoModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2 id="modal-title"></h2>
+    <div id="modal-video"></div>
+    <p id="modal-description"></p>
+    <div id="modal-channel"></div>
+    <div id="modal-comments"></div>
+  </div>
+</div>
+
 </body>
 </html>
