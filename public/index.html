@@ -1,3 +1,4 @@
+<!-- Paste this into your main index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +12,6 @@
       background: #000;
       color: white;
       overflow-x: hidden;
-      overflow-y: hidden; /* Prevent full-page scroll */
     }
 
     header {
@@ -42,22 +42,6 @@
       cursor: pointer;
     }
 
-    .auth-form {
-      background: #111;
-      padding: 15px;
-      max-width: 300px;
-      margin: 10px auto;
-      border-radius: 10px;
-    }
-
-    .auth-form input {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-      border: none;
-      border-radius: 4px;
-    }
-
     .nav-buttons {
       display: flex;
       justify-content: center;
@@ -83,8 +67,6 @@
     .screen {
       display: none;
       padding: 10px;
-      height: calc(100vh - 60px);
-      overflow: hidden;
     }
 
     .screen.active {
@@ -103,15 +85,13 @@
       background-color: #000;
       display: flex;
       justify-content: flex-end;
-      align-items: flex-start;
     }
 
-    .news-wrapper {
+    #news-videos {
       width: 320px;
-      height: 100%;
+      max-height: 100vh;
       overflow-y: auto;
       padding: 10px;
-      background: #1a1a1a;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -153,6 +133,11 @@
       font-weight: bold;
       width: 100%;
       margin: 20px 0 10px 0;
+    }
+
+    .group-heading.latest {
+      background: red;
+      color: black;
     }
 
     .modal {
@@ -232,7 +217,9 @@
   </div>
 
   <div id="news" class="screen">
-    <div class="news-wrapper" id="news-videos"></div>
+    <div class="news-wrapper">
+      <div id="news-videos"></div>
+    </div>
   </div>
 
   <div id="videoModal" class="modal" onclick="closeModal(event)">
@@ -279,50 +266,49 @@
       return card;
     }
 
+    function renderGroup(title, videos, container, className = '') {
+      const heading = document.createElement('div');
+      heading.className = 'group-heading ' + className;
+      heading.textContent = title;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'scroll-row';
+
+      videos.forEach(v => {
+        const vid = v.snippet.resourceId.videoId;
+        if (!loadedVideos[container.id.replace('-videos', '')].has(vid)) {
+          loadedVideos[container.id.replace('-videos', '')].add(vid);
+          wrapper.appendChild(createCard(v));
+        }
+      });
+
+      container.appendChild(heading);
+      container.appendChild(wrapper);
+    }
+
     async function loadGrouped(section, containerId) {
       const container = document.getElementById(containerId);
       const loading = container.previousElementSibling;
       if (loading) loading.textContent = "Loading...";
+
       const data = await fetchVideos(section);
       if (loading) loading.style.display = 'none';
 
+      // LATEST group
+      if (data.latest) {
+        renderGroup('LATEST', data.latest.slice(0, 20), container, 'latest');
+      }
+
+      // Other groups
       if (section !== 'news') {
         for (const group of Object.keys(data.grouped || {}).sort()) {
           const vids = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-          if (!vids.length) continue;
-
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = group;
-          const wrapper = document.createElement('div');
-          wrapper.className = 'scroll-row';
-
-          vids.forEach(v => {
-            loadedVideos[section].add(v.snippet.resourceId.videoId);
-            wrapper.appendChild(createCard(v));
-          });
-
-          container.appendChild(heading);
-          container.appendChild(wrapper);
+          if (vids.length) renderGroup(group, vids, container);
         }
       }
 
       const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-      if (mixed.length) {
-        const heading = document.createElement('div');
-        heading.className = 'group-heading';
-        heading.textContent = 'Mixed';
-        const wrapper = document.createElement('div');
-        wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-        mixed.forEach(v => {
-          loadedVideos[section].add(v.snippet.resourceId.videoId);
-          wrapper.appendChild(createCard(v));
-        });
-
-        container.appendChild(heading);
-        container.appendChild(wrapper);
-      }
+      if (mixed.length) renderGroup('Mixed', mixed, container);
     }
 
     function toggleAuthForm(mode) {
