@@ -5,217 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Anim3Vault</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #000;
-      color: white;
-      overflow-x: hidden;
-    }
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: #111;
-      padding: 10px 20px;
-      font-size: 1.8em;
-      font-weight: bold;
-      text-align: center;
-      color: white;
-    }
-    .auth-buttons {
-      position: absolute;
-      right: 20px;
-      top: 10px;
-    }
-    .auth-buttons button {
-      margin-left: 8px;
-      padding: 6px 10px;
-      background: #444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .auth-form {
-      background: #111;
-      padding: 15px;
-      max-width: 300px;
-      margin: 10px auto;
-      border-radius: 10px;
-    }
-    .auth-form input {
-      width: 100%;
-      margin-bottom: 10px;
-      padding: 8px;
-      border: none;
-      border-radius: 4px;
-    }
-    .nav-buttons {
-      display: flex;
-      justify-content: center;
-      background: #222;
-      flex-wrap: wrap;
-    }
-    .nav-buttons .btn {
-      color: white;
-      padding: 10px 15px;
-      margin: 5px;
-      background: #444;
-      border-radius: 8px;
-      font-size: 1em;
-      cursor: pointer;
-    }
-    .nav-buttons .btn.active {
-      background: #f0f;
-      color: black;
-    }
-    .screen {
-      display: none;
-      padding: 10px;
-    }
-    .screen.active { display: block; }
-
-    #anim3 { background-color: #18112b; }
-    #donghua { background-color: #12243b; }
-    #news {
-      background-color: #000;
-      display: flex;
-      justify-content: flex-end;
-    }
-    #news-videos {
-      width: 320px;
-      max-height: 100vh;
-      overflow-y: auto;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .scroll-row {
-      display: flex;
-      overflow-x: auto;
-      gap: 16px;
-      padding-bottom: 10px;
-    }
-
-    .video-card {
-      background: #1a1a1a;
-      border-radius: 10px;
-      overflow: hidden;
-      width: 280px;
-      flex-shrink: 0;
-    }
-
-    .video-thumb img {
-      width: 100%;
-      display: block;
-      cursor: pointer;
-      aspect-ratio: 16/9;
-      object-fit: cover;
-    }
-
-    .video-title {
-      padding: 10px;
-      text-align: center;
-    }
-
-    .group-heading {
-      background: black;
-      color: white;
-      padding: 10px 16px;
-      font-size: 1.2em;
-      font-weight: bold;
-      width: 100%;
-      margin: 20px 0 10px 0;
-    }
-
-    .group-heading.red {
-      background: red;
-      color: black;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0,0,0,0.9);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal-content {
-      max-width: 900px;
-      width: 90%;
-      background: #111;
-      padding: 15px;
-      border-radius: 8px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-content iframe {
-      width: 100%;
-      height: 50vw;
-      max-height: 450px;
-    }
-
-    .close-btn {
-      float: right;
-      font-size: 24px;
-      color: #f0f;
-      cursor: pointer;
-    }
-
-    @media screen and (max-width: 768px) {
-      .modal-content iframe {
-        height: 56vw;
-      }
-    }
+    body { margin:0; font-family:'Segoe UI',sans-serif; background:#000; color:white; overflow-x:hidden; }
+    header { position:sticky; top:0; background:#111; padding:10px; text-align:center; font-size:1.8em; }
+    .nav-buttons { display:flex; justify-content:center; background:#222; flex-wrap:wrap; }
+    .nav-buttons .btn { color:white; padding:10px; margin:5px; background:#444; border-radius:8px; cursor:pointer; }
+    .nav-buttons .btn.active { background:#f0f; color:black; }
+    .screen { display:none; padding:10px; }
+    .screen.active { display:block; }
+    #anim3 { background:#18112b; }
+    #donghua { background:#12243b; }
+    #news { background:#2b1414; }
+    .scroll-row { display:flex; overflow-x:auto; gap:16px; padding-bottom:10px; }
+    .vertical-scroll { display:flex; flex-direction:column; gap:16px; max-height:75vh; overflow-y:auto; }
+    .group-heading { background:black; color:white; padding:10px 16px; font-size:1.2em; margin:20px 0 10px; }
+    .group-heading.red { background:red; color:black; }
+    .video-card { background:#1a1a1a; border-radius:10px; width:280px; flex-shrink:0; overflow:hidden; }
+    .video-thumb img { width:100%; cursor:pointer; aspect-ratio:16/9; object-fit:cover; }
+    .video-title { padding:10px; text-align:center; }
+    .modal { display:none; position:fixed; top:0;left:0;width:100vw;height:100vh; background:rgba(0,0,0,0.9); justify-content:center; align-items:center; }
+    .modal-content { background:#111; padding:15px; border-radius:8px; max-width:900px; max-height:90vh; overflow-y:auto; }
+    .modal-content iframe { width:100%; height:50vw; max-height:450px; }
+    .close-btn { float:right; font-size:24px; color:#f0f; cursor:pointer; }
+    @media(max-width:768px){ .modal-content iframe{ height:56vw } }
   </style>
 </head>
 <body>
-  <header>
-    Anim3Vault
+  <header>Anim3Vault
     <div class="auth-buttons">
       <button id="loginBtn" onclick="toggleAuthForm('login')">Login</button>
       <button id="signupBtn" onclick="toggleAuthForm('signup')">Signup</button>
-      <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+      <button id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
     </div>
   </header>
 
   <div class="auth-form" id="authForm" style="display:none;">
     <div id="authTitle">Login</div>
-    <input type="text" id="authUsername" placeholder="Username" />
+    <input id="authUsername" placeholder="Username" />
     <input type="password" id="authPassword" placeholder="Password" />
     <button onclick="submitAuth()">Submit</button>
-    <div id="authMessage" style="color: red;"></div>
+    <div id="authMessage" style="color:red;"></div>
   </div>
 
   <div class="nav-buttons">
-    <a class="btn" onclick="showScreen('anim3', this)">Anim3</a>
-    <a class="btn active" onclick="showScreen('donghua', this)">Donghu@</a>
-    <a class="btn" onclick="showScreen('news', this)">New$</a>
+    <a class="btn active" onclick="showScreen('anim3', this)">Anim3</a>
+    <a class="btn" onclick="showScreen('donghua', this)">Donghua</a>
+    <a class="btn" onclick="showScreen('news', this)">News</a>
   </div>
 
-  <div id="anim3" class="screen">
-    <div class="loading">Loading Anim3 videos...</div>
+  <div id="anim3" class="screen active">
+    <div class="loading">Loading Anim3...</div>
     <div id="anim3-videos"></div>
   </div>
 
-  <div id="donghua" class="screen active">
-    <div class="loading">Loading Donghua videos...</div>
+  <div id="donghua" class="screen">
+    <div class="loading">Loading Donghua...</div>
     <div id="donghua-videos"></div>
   </div>
 
   <div id="news" class="screen">
-    <div class="news-wrapper">
-      <div id="news-videos"></div>
-    </div>
+    <div class="loading">Loading News...</div>
+    <div id="news-videos" class="vertical-scroll"></div>
   </div>
 
   <div id="videoModal" class="modal" onclick="closeModal(event)">
@@ -228,180 +77,99 @@
       <div id="modal-comments"></div>
     </div>
   </div>
+<script>
+  const pageTokens = { anim3:'', donghua:'', news:'' };
+  const loaded = { anim3:new Set(), donghua:new Set(), news:new Set() };
 
-  <script>
-    const pageTokens = { anim3: '', donghua: '', news: '' };
-    const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
+  function showScreen(id, btn) {
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-buttons .btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  }
 
-    function showScreen(id, btn) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
+  async function fetchVideos(type) {
+    const res = await fetch(`/api/fetch-videos?type=${type}`);
+    return res.json();
+  }
 
-    async function fetchVideos(type) {
-      const res = await fetch(`/api/fetch-videos?type=${type}`);
-      return await res.json();
-    }
+  function createCard(v) {
+    const card = document.createElement('div');
+    card.className = 'video-card';
+    const thumb = v.snippet.thumbnails.medium.url;
+    const vid = v.snippet.resourceId.videoId;
+    card.innerHTML = `<div class="video-thumb"><img src="${thumb}" alt=""></div><div class="video-title">${v.snippet.title}</div>`;
+    card.querySelector('img').onclick = () => showModal(v);
+    return card;
+  }
 
-    function createCard(video) {
-      const card = document.createElement('div');
-      card.className = 'video-card';
-      const vid = video.snippet.resourceId.videoId;
-      const thumbnail = video.snippet.thumbnails.medium.url;
-      card.innerHTML = `
-        <div class="video-thumb"><img src="${thumbnail}" alt="${video.snippet.title}" /></div>
-        <div class="video-title">${video.snippet.title}</div>`;
-      card.querySelector('img').onclick = () => showModal(video);
-      return card;
-    }
+  async function loadGrouped(section, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    document.querySelector(`#${section}-videos ~ .loading`).textContent = 'Loading...';
+    const data = await fetchVideos(section);
+    document.querySelector(`#${section}-videos ~ .loading`).textContent = '';
 
-    async function loadGrouped(section, containerId) {
-      const container = document.getElementById(containerId);
-      const loading = container.previousElementSibling;
-      if (loading) loading.textContent = "Loading...";
-      const data = await fetchVideos(section);
-      if (loading) loading.style.display = 'none';
-
-      // Show LATEST group first for anim3 and donghua
-      if (data.latest && Array.isArray(data.latest) && section !== 'news') {
-        const latest = data.latest.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-        if (latest.length) {
-          const heading = document.createElement('div');
-          heading.className = 'group-heading red';
-          heading.textContent = 'LATEST';
-          const wrapper = document.createElement('div');
-          wrapper.className = 'scroll-row';
-          latest.forEach(v => {
-            loadedVideos[section].add(v.snippet.resourceId.videoId);
-            wrapper.appendChild(createCard(v));
-          });
-          container.appendChild(heading);
-          container.appendChild(wrapper);
-        }
-      }
-
-      // Show dynamically grouped donghua (sorted by most recent inside)
-      if (section === 'donghua' && data.grouped) {
-        const groups = Object.entries(data.grouped).map(([name, vids]) => {
-          const filtered = vids.filter(v => !loadedVideos.donghua.has(v.snippet.resourceId.videoId));
-          if (!filtered.length) return null;
-          const latestTs = Math.max(...filtered.map(v => new Date(v.snippet.publishedAt).getTime()));
-          return { name, vids: filtered, latestTs };
-        }).filter(Boolean).sort((a, b) => b.latestTs - a.latestTs);
-
-        groups.forEach(group => {
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = group.name;
-          const wrapper = document.createElement('div');
-          wrapper.className = 'scroll-row';
-          group.vids.forEach(v => {
-            loadedVideos.donghua.add(v.snippet.resourceId.videoId);
-            wrapper.appendChild(createCard(v));
-          });
-          container.appendChild(heading);
-          container.appendChild(wrapper);
-        });
-      }
-
-      // Default grouped rendering for anim3 (alphabetical order)
-      if (section === 'anim3' && data.grouped) {
-        const keys = Object.keys(data.grouped).sort();
-        for (const group of keys) {
-          const vids = data.grouped[group].filter(v => !loadedVideos.anim3.has(v.snippet.resourceId.videoId));
-          if (!vids.length) continue;
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = group;
-          const wrapper = document.createElement('div');
-          wrapper.className = 'scroll-row';
-          vids.forEach(v => {
-            loadedVideos.anim3.add(v.snippet.resourceId.videoId);
-            wrapper.appendChild(createCard(v));
-          });
-          container.appendChild(heading);
-          container.appendChild(wrapper);
-        }
-      }
-
-      // Mixed for all (always shown last)
-      const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-      if (mixed.length) {
-        const heading = document.createElement('div');
-        heading.className = 'group-heading';
-        heading.textContent = 'Mixed';
-        const wrapper = document.createElement('div');
-        wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-        mixed.forEach(v => {
-          loadedVideos[section].add(v.snippet.resourceId.videoId);
-          wrapper.appendChild(createCard(v));
-        });
-        container.appendChild(heading);
-        container.appendChild(wrapper);
+    // LATEST group
+    if (section !== 'news' && data.latest) {
+      const lis = data.latest.filter(v=>!loaded[section].has(v.snippet.resourceId.videoId));
+      if(lis.length){
+        const hd = document.createElement('div'); hd.className='group-heading red'; hd.textContent='LATEST';
+        const wr = document.createElement('div'); wr.className = section==='news'?'vertical-scroll':'scroll-row';
+        lis.forEach(v=>{loaded[section].add(v.snippet.resourceId.videoId);wr.appendChild(createCard(v));});
+        container.appendChild(hd); container.appendChild(wr);
       }
     }
 
-    function toggleAuthForm(mode) {
-      document.getElementById("authForm").style.display = "block";
-      document.getElementById("authTitle").textContent = mode === "signup" ? "Signup" : "Login";
-      document.getElementById("authForm").setAttribute("data-mode", mode);
-      document.getElementById("authMessage").textContent = '';
-    }
+    // Donghua group sorting
+    if(section==='donghua' && data.grouped){
+      const groups = Object.entries(data.grouped).map(([n,vs])=>{
+        const arr = vs.filter(v=>!loaded.donghua.has(v.snippet.resourceId.videoId));
+        if(!arr.length) return null;
+        const latestTs = Math.max(...arr.map(v=>new Date(v.snippet.publishedAt).getTime()));
+        return {name:n, vids:arr, latestTs};
+      }).filter(Boolean).sort((a,b)=>b.latestTs - a.latestTs);
 
-    function submitAuth() {
-      const mode = document.getElementById("authForm").getAttribute("data-mode");
-      const u = document.getElementById("authUsername").value.trim();
-      const p = document.getElementById("authPassword").value;
-      if (!u || !p) return showMsg("Fill all fields");
-      const users = JSON.parse(localStorage.getItem("users") || "{}");
-      if (mode === "signup") {
-        if (users[u]) return showMsg("User exists");
-        users[u] = p;
-      } else {
-        if (users[u] !== p) return showMsg("Invalid credentials");
+      for(const g of groups){
+        const hd = document.createElement('div'); hd.className='group-heading'; hd.textContent=g.name;
+        const wr = document.createElement('div'); wr.className='scroll-row';
+        g.vids.forEach(v=>{loaded.donghua.add(v.snippet.resourceId.videoId);wr.appendChild(createCard(v));});
+        container.appendChild(hd); container.appendChild(wr);
       }
-      localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("loggedInUser", u);
-      hideAuthUI();
     }
 
-    function showMsg(m) { document.getElementById("authMessage").textContent = m; }
-    function hideAuthUI() {
-      document.getElementById("authForm").style.display = "none";
-      document.getElementById("loginBtn").style.display = "none";
-      document.getElementById("signupBtn").style.display = "none";
-      document.getElementById("logoutBtn").style.display = "inline-block";
+    // Mixed group
+    const mix = (data.mixed||[]).filter(v=>!loaded[section].has(v.snippet.resourceId.videoId));
+    if(mix.length){
+      const hd = document.createElement('div'); hd.className='group-heading'; hd.textContent='Mixed';
+      const wr = document.createElement('div'); wr.className= section==='news'?'vertical-scroll':'scroll-row';
+      mix.forEach(v=>{loaded[section].add(v.snippet.resourceId.videoId);wr.appendChild(createCard(v));});
+      container.appendChild(hd); container.appendChild(wr);
     }
-    function logout() {
-      localStorage.removeItem("loggedInUser");
-      document.getElementById("loginBtn").style.display = "inline-block";
-      document.getElementById("signupBtn").style.display = "inline-block";
-      document.getElementById("logoutBtn").style.display = "none";
-    }
+  }
 
-    function showModal(video) {
-      const vid = video.snippet.resourceId.videoId;
-      document.getElementById("modal-title").textContent = video.snippet.title;
-      document.getElementById("modal-video").innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
-      document.getElementById("modal-description").textContent = video.snippet.description;
-      document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
-      document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments</a>`;
-      document.getElementById("videoModal").style.display = "flex";
-    }
+  function showModal(v){
+    const vid = v.snippet.resourceId.videoId;
+    document.getElementById('modal-title').textContent = v.snippet.title;
+    document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
+    document.getElementById('modal-description').textContent = v.snippet.description;
+    document.getElementById('modal-channel').innerHTML = `<a href="https://www.youtube.com/channel/${v.snippet.channelId}" target="_blank">Channel</a>`;
+    document.getElementById('modal-comments').innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">Comments</a>`;
+    document.getElementById('videoModal').style.display='flex';
+  }
 
-    function closeModal() {
-      document.getElementById("videoModal").style.display = "none";
-      document.getElementById("modal-video").innerHTML = '';
+  function closeModal(e){
+    if(e.target.id==='videoModal' || e.target.classList.contains('close-btn')){
+      document.getElementById('videoModal').style.display='none';
+      document.getElementById('modal-video').innerHTML='';
     }
+  }
 
-    window.onload = () => {
-      if (localStorage.getItem("loggedInUser")) hideAuthUI();
-      loadGrouped("anim3", "anim3-videos");
-      loadGrouped("donghua", "donghua-videos");
-      loadGrouped("news", "news-videos");
-    };
-  </script>
+  window.onload = ()=>{
+    loadGrouped('anim3','anim3-videos');
+    loadGrouped('donghua','donghua-videos');
+    loadGrouped('news','news-videos');
+  };
+</script>
 </body>
 </html>
