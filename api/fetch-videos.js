@@ -3,7 +3,7 @@ const API_KEY = process.env.YT_API_KEY;
 const PLAYLISTS = {
   donghua: "PLbTlJpronU8_GMDGyQlawguePVZVNnxNO",
   news: "PLbTlJpronU89p4fsTtmbW_bNgcJonX2ae",
-  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk" // ✅ Anime playlist added here
+  anim3: "PLbTlJpronU8_-c2M_G7P4VwtBJTn1S0wk"
 };
 
 const DONGHUA_TITLES = [
@@ -38,6 +38,7 @@ export default async function handler(req, res) {
     const addedIds = new Set();
     const grouped = {};
     const mixed = [];
+    const latest = [];
 
     for (let keyword of DONGHUA_TITLES) {
       grouped[keyword] = [];
@@ -60,7 +61,13 @@ export default async function handler(req, res) {
       addedIds.add(id);
     }
 
-    return res.status(200).json({ grouped, mixed });
+    // Sort items by publishedAt descending and take top 20 for "LATEST"
+    latest.push(...[...items]
+      .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
+      .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
+      .slice(0, 20));
+
+    return res.status(200).json({ grouped, mixed, latest });
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
