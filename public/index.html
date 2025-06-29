@@ -6,7 +6,7 @@
   <title>Anim3Vault</title>
   <style>
     body { margin:0; font-family:'Segoe UI',sans-serif; background:#000; color:white; overflow-x:hidden; }
-    header { position:sticky; top:0; background:#111; padding:10px; text-align:center; font-size:1.8em; }
+    header { position:sticky; top:0; background:#111; padding:10px; text-align:center; font-size:1.8em; z-index:1000; }
     .nav-buttons { display:flex; justify-content:center; background:#222; flex-wrap:wrap; }
     .nav-buttons .btn { color:white; padding:10px; margin:5px; background:#444; border-radius:8px; cursor:pointer; }
     .nav-buttons .btn.active { background:#f0f; color:black; }
@@ -26,6 +26,10 @@
     .modal-content { background:#111; padding:15px; border-radius:8px; max-width:900px; max-height:90vh; overflow-y:auto; }
     .modal-content iframe { width:100%; height:50vw; max-height:450px; }
     .close-btn { float:right; font-size:24px; color:#f0f; cursor:pointer; }
+    .auth-buttons { position:absolute; right:20px; top:10px; }
+    .auth-buttons button { margin-left:8px; padding:6px 10px; background:#444; color:white; border:none; border-radius:6px; cursor:pointer; }
+    .auth-form { background:#111; padding:15px; max-width:300px; margin:10px auto; border-radius:10px; }
+    .auth-form input { width:100%; margin-bottom:10px; padding:8px; border:none; border-radius:4px; }
     @media(max-width:768px){ .modal-content iframe{ height:56vw } }
   </style>
 </head>
@@ -78,140 +82,173 @@
     </div>
   </div>
 <script>
-  const pageTokens = { anim3:'', donghua:'', news:'' };
-  const loaded = { anim3:new Set(), donghua:new Set(), news:new Set() };
+  const pageTokens = { anim3: '', donghua: '', news: '' };
+  const loaded = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
   function showScreen(id, btn) {
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(id).classList.add('active');
-    document.querySelectorAll('.nav-buttons .btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
 
   async function fetchVideos(type) {
-    const res = await fetch(`/api/fetch-videos?type=${type}`);
-    return res.json();
+    const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]}`);
+    const data = await res.json();
+    pageTokens[type] = data.nextPage || '';
+    return data;
   }
 
-  function createCard(v) {
+  function createCard(video) {
     const card = document.createElement('div');
     card.className = 'video-card';
-    const thumb = v.snippet.thumbnails.medium.url;
-    const vid = v.snippet.resourceId.videoId;
-    card.innerHTML = `<div class="video-thumb"><img src="${thumb}" alt=""></div><div class="video-title">${v.snippet.title}</div>`;
-    card.querySelector('img').onclick = () => showModal(v);
+    const vid = video.snippet.resourceId.videoId;
+    const thumbnail = video.snippet.thumbnails.medium.url;
+    card.innerHTML = `
+      <div class="video-thumb">
+        <img src="${thumbnail}" alt="${video.snippet.title}" />
+      </div>
+      <div class="video-title">${video.snippet.title}</div>
+    `;
+    card.querySelector('img').onclick = () => showModal(video);
     return card;
   }
 
   async function loadGrouped(section, containerId) {
-  const container = document.getElementById(containerId);
-  const loading = container.previousElementSibling;
-  if (loading) loading.textContent = "Loading...";
+    const container = document.getElementById(containerId);
+    const loading = container.previousElementSibling;
+    if (loading) loading.textContent = "Loading...";
+    const data = await fetchVideos(section);
+    if (loading) loading.style.display = 'none';
+    container.innerHTML = '';
 
-  const data = await fetchVideos(section);
-  console.log('=== Section:', section, 'Data keys:', Object.keys(data));
-  if (section === 'donghua') console.log('Donghua raw data:', data);
-
-  if (loading) loading.style.display = 'none';
-
-  // Reset container (optional: useful during testing)
-  container.innerHTML = '';
-
-  // ✅ Render 'LATEST' group if available
-  if (data.latest && data.latest.length) {
-    const heading = document.createElement('div');
-    heading.className = 'group-heading';
-    heading.style.backgroundColor = 'red';
-    heading.style.color = 'black';
-    heading.textContent = 'LATEST';
-
-    const wrapper = document.createElement('div');
-    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-    data.latest.forEach(v => {
-      loadedVideos[section].add(v.snippet.resourceId.videoId);
-      wrapper.appendChild(createCard(v));
-    });
-
-    container.appendChild(heading);
-    container.appendChild(wrapper);
-  }
-
-  // ✅ Donghua: sort grouped by most recent video in each group
-  if (section === 'donghua' && data.grouped) {
-    const sortedGroups = Object.entries(data.grouped)
-      .filter(([, vids]) => vids.length)
-      .map(([key, vids]) => ({
-        key,
-        vids,
-        latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
-      }))
-      .sort((a, b) => b.latestTime - a.latestTime);
-
-    console.log('Sorted donghua groups:', sortedGroups.map(g => g.key));
-
-    for (const group of sortedGroups) {
+    // 1. LATEST group for anim3 & donghua
+    if (section !== 'news' && data.latest && data.latest.length) {
       const heading = document.createElement('div');
-      heading.className = 'group-heading';
-      heading.textContent = group.key;
-
+      heading.className = 'group-heading red';
+      heading.textContent = 'LATEST';
       const wrapper = document.createElement('div');
       wrapper.className = 'scroll-row';
-
-      group.vids.forEach(v => {
-        if (!loadedVideos[section].has(v.snippet.resourceId.videoId)) {
-          loadedVideos[section].add(v.snippet.resourceId.videoId);
+      data.latest.forEach(v => {
+        const vid = v.snippet.resourceId.videoId;
+        if (!loaded[section].has(vid)) {
+          loaded[section].add(vid);
           wrapper.appendChild(createCard(v));
         }
       });
+      container.appendChild(heading);
+      container.appendChild(wrapper);
+    }
 
+    // 2. Donghua dynamic groups
+    if (section === 'donghua' && data.grouped) {
+      const groups = Object.entries(data.grouped).map(([name, vids]) => {
+        const fresh = vids.filter(v => !loaded[section].has(v.snippet.resourceId.videoId));
+        const latestTime = fresh.length
+          ? Math.max(...fresh.map(v => new Date(v.snippet.publishedAt).getTime()))
+          : 0;
+        return { name, vids: fresh, latestTime };
+      }).filter(g => g.vids.length)
+        .sort((a, b) => b.latestTime - a.latestTime);
+
+      for (const g of groups) {
+        const heading = document.createElement('div');
+        heading.className = 'group-heading';
+        heading.textContent = g.name;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'scroll-row';
+        g.vids.forEach(v => {
+          loaded[section].add(v.snippet.resourceId.videoId);
+          wrapper.appendChild(createCard(v));
+        });
+        container.appendChild(heading);
+        container.appendChild(wrapper);
+      }
+    }
+
+    // 3. Mixed group always shown
+    const mixed = (data.mixed || []).filter(v => !loaded[section].has(v.snippet.resourceId.videoId));
+    if (mixed.length) {
+      const heading = document.createElement('div');
+      heading.className = 'group-heading';
+      heading.textContent = 'Mixed';
+      const wrapper = document.createElement('div');
+      wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+      mixed.forEach(v => {
+        loaded[section].add(v.snippet.resourceId.videoId);
+        wrapper.appendChild(createCard(v));
+      });
       container.appendChild(heading);
       container.appendChild(wrapper);
     }
   }
 
-  // ✅ Render 'Mixed' group (if any left)
-  const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-  if (mixed.length) {
-    const heading = document.createElement('div');
-    heading.className = 'group-heading';
-    heading.textContent = 'Mixed';
-
-    const wrapper = document.createElement('div');
-    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-    mixed.forEach(v => {
-      loadedVideos[section].add(v.snippet.resourceId.videoId);
-      wrapper.appendChild(createCard(v));
-    });
-
-    container.appendChild(heading);
-    container.appendChild(wrapper);
-  }
-}
-
-
-  function showModal(v){
+  function showModal(v) {
     const vid = v.snippet.resourceId.videoId;
-    document.getElementById('modal-title').textContent = v.snippet.title;
-    document.getElementById('modal-video').innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
-    document.getElementById('modal-description').textContent = v.snippet.description;
-    document.getElementById('modal-channel').innerHTML = `<a href="https://www.youtube.com/channel/${v.snippet.channelId}" target="_blank">Channel</a>`;
-    document.getElementById('modal-comments').innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">Comments</a>`;
-    document.getElementById('videoModal').style.display='flex';
+    document.getElementById("modal-title").textContent = v.snippet.title;
+    document.getElementById("modal-video").innerHTML = `
+      <iframe src="https://www.youtube.com/embed/${vid}?autoplay=1" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    `;
+    document.getElementById("modal-description").textContent = v.snippet.description;
+    document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${v.snippet.channelId}" target="_blank">${v.snippet.channelTitle}</a>`;
+    document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments</a>`;
+    document.getElementById("videoModal").style.display = 'flex';
   }
 
-  function closeModal(e){
-    if(e.target.id==='videoModal' || e.target.classList.contains('close-btn')){
-      document.getElementById('videoModal').style.display='none';
-      document.getElementById('modal-video').innerHTML='';
+  function closeModal(e) {
+    if (!e || e.target.id === 'videoModal' || e.target.classList.contains('close-btn')) {
+      document.getElementById('videoModal').style.display = 'none';
+      document.getElementById('modal-video').innerHTML = '';
     }
   }
 
-  window.onload = ()=>{
-    loadGrouped('anim3','anim3-videos');
-    loadGrouped('donghua','donghua-videos');
-    loadGrouped('news','news-videos');
+  function toggleAuthForm(mode) {
+    document.getElementById("authForm").style.display = "block";
+    document.getElementById("authTitle").textContent = mode === "signup" ? "Signup" : "Login";
+    document.getElementById("authForm").setAttribute("data-mode", mode);
+    document.getElementById("authMessage").textContent = '';
+  }
+
+  function submitAuth() {
+    const mode = document.getElementById("authForm").getAttribute("data-mode");
+    const username = document.getElementById("authUsername").value.trim();
+    const password = document.getElementById("authPassword").value;
+    if (!username || !password) return showMsg("Fill all fields");
+    const users = JSON.parse(localStorage.getItem("users") || "{}");
+    if (mode === "signup") {
+      if (users[username]) return showMsg("User already exists");
+      users[username] = password;
+    } else {
+      if (users[username] !== password) return showMsg("Invalid credentials");
+    }
+    localStorage.setItem("users", JSON.stringify(users));
+    localStorage.setItem("loggedInUser", username);
+    hideAuthUI();
+  }
+
+  function showMsg(msg) {
+    document.getElementById("authMessage").textContent = msg;
+  }
+
+  function hideAuthUI() {
+    document.getElementById("authForm").style.display = "none";
+    document.getElementById("loginBtn").style.display = "none";
+    document.getElementById("signupBtn").style.display = "none";
+    document.getElementById("logoutBtn").style.display = "inline-block";
+  }
+
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    document.getElementById("loginBtn").style.display = "inline-block";
+    document.getElementById("signupBtn").style.display = "inline-block";
+    document.getElementById("logoutBtn").style.display = "none";
+  }
+
+  window.onload = () => {
+    if (localStorage.getItem("loggedInUser")) hideAuthUI();
+    loadGrouped("anim3", "anim3-videos");
+    loadGrouped("donghua", "donghua-videos");
+    loadGrouped("news", "news-videos");
   };
 </script>
 </body>
