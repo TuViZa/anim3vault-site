@@ -1,4 +1,4 @@
-make updaate here and give full coe - <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -12,7 +12,6 @@ make updaate here and give full coe - <!DOCTYPE html>
       color: white;
       overflow-x: hidden;
     }
-
     header {
       position: sticky;
       top: 0;
@@ -24,13 +23,11 @@ make updaate here and give full coe - <!DOCTYPE html>
       text-align: center;
       color: white;
     }
-
     .auth-buttons {
       position: absolute;
       right: 20px;
       top: 10px;
     }
-
     .auth-buttons button {
       margin-left: 8px;
       padding: 6px 10px;
@@ -40,7 +37,6 @@ make updaate here and give full coe - <!DOCTYPE html>
       border-radius: 6px;
       cursor: pointer;
     }
-
     .auth-form {
       background: #111;
       padding: 15px;
@@ -48,7 +44,6 @@ make updaate here and give full coe - <!DOCTYPE html>
       margin: 10px auto;
       border-radius: 10px;
     }
-
     .auth-form input {
       width: 100%;
       margin-bottom: 10px;
@@ -56,14 +51,12 @@ make updaate here and give full coe - <!DOCTYPE html>
       border: none;
       border-radius: 4px;
     }
-
     .nav-buttons {
       display: flex;
       justify-content: center;
       background: #222;
       flex-wrap: wrap;
     }
-
     .nav-buttons .btn {
       color: white;
       padding: 10px 15px;
@@ -73,35 +66,23 @@ make updaate here and give full coe - <!DOCTYPE html>
       font-size: 1em;
       cursor: pointer;
     }
-
     .nav-buttons .btn.active {
       background: #f0f;
       color: black;
     }
-
     .screen {
       display: none;
       padding: 10px;
     }
+    .screen.active { display: block; }
 
-    .screen.active {
-      display: block;
-    }
-
-    #anim3 {
-      background-color: #18112b;
-    }
-
-    #donghua {
-      background-color: #12243b;
-    }
-
+    #anim3 { background-color: #18112b; }
+    #donghua { background-color: #12243b; }
     #news {
       background-color: #000;
       display: flex;
       justify-content: flex-end;
     }
-
     #news-videos {
       width: 320px;
       max-height: 100vh;
@@ -148,6 +129,11 @@ make updaate here and give full coe - <!DOCTYPE html>
       font-weight: bold;
       width: 100%;
       margin: 20px 0 10px 0;
+    }
+
+    .group-heading.red {
+      background: red;
+      color: black;
     }
 
     .modal {
@@ -227,11 +213,10 @@ make updaate here and give full coe - <!DOCTYPE html>
   </div>
 
   <div id="news" class="screen">
-  <div class="news-wrapper">
-    <div id="news-videos"></div>
+    <div class="news-wrapper">
+      <div id="news-videos"></div>
+    </div>
   </div>
-</div>
-
 
   <div id="videoModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
@@ -245,7 +230,7 @@ make updaate here and give full coe - <!DOCTYPE html>
   </div>
 
   <script>
-    let pageTokens = { anim3: '', donghua: '', news: '' };
+    const pageTokens = { anim3: '', donghua: '', news: '' };
     const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
     function showScreen(id, btn) {
@@ -256,10 +241,8 @@ make updaate here and give full coe - <!DOCTYPE html>
     }
 
     async function fetchVideos(type) {
-      const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]}`);
-      const data = await res.json();
-      pageTokens[type] = data.nextPage || '';
-      return data;
+      const res = await fetch(`/api/fetch-videos?type=${type}`);
+      return await res.json();
     }
 
     function createCard(video) {
@@ -268,11 +251,8 @@ make updaate here and give full coe - <!DOCTYPE html>
       const vid = video.snippet.resourceId.videoId;
       const thumbnail = video.snippet.thumbnails.medium.url;
       card.innerHTML = `
-        <div class="video-thumb">
-          <img src="${thumbnail}" alt="${video.snippet.title}" />
-        </div>
-        <div class="video-title">${video.snippet.title}</div>
-      `;
+        <div class="video-thumb"><img src="${thumbnail}" alt="${video.snippet.title}" /></div>
+        <div class="video-title">${video.snippet.title}</div>`;
       card.querySelector('img').onclick = () => showModal(video);
       return card;
     }
@@ -284,27 +264,69 @@ make updaate here and give full coe - <!DOCTYPE html>
       const data = await fetchVideos(section);
       if (loading) loading.style.display = 'none';
 
-      if (section !== 'news') {
-        for (const group of Object.keys(data.grouped || {}).sort()) {
-          const vids = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
-          if (!vids.length) continue;
-
+      // Show LATEST group first for anim3 and donghua
+      if (data.latest && Array.isArray(data.latest) && section !== 'news') {
+        const latest = data.latest.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+        if (latest.length) {
           const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = group;
+          heading.className = 'group-heading red';
+          heading.textContent = 'LATEST';
           const wrapper = document.createElement('div');
           wrapper.className = 'scroll-row';
-
-          vids.forEach(v => {
+          latest.forEach(v => {
             loadedVideos[section].add(v.snippet.resourceId.videoId);
             wrapper.appendChild(createCard(v));
           });
-
           container.appendChild(heading);
           container.appendChild(wrapper);
         }
       }
 
+      // Show dynamically grouped donghua (sorted by most recent inside)
+      if (section === 'donghua' && data.grouped) {
+        const groups = Object.entries(data.grouped).map(([name, vids]) => {
+          const filtered = vids.filter(v => !loadedVideos.donghua.has(v.snippet.resourceId.videoId));
+          if (!filtered.length) return null;
+          const latestTs = Math.max(...filtered.map(v => new Date(v.snippet.publishedAt).getTime()));
+          return { name, vids: filtered, latestTs };
+        }).filter(Boolean).sort((a, b) => b.latestTs - a.latestTs);
+
+        groups.forEach(group => {
+          const heading = document.createElement('div');
+          heading.className = 'group-heading';
+          heading.textContent = group.name;
+          const wrapper = document.createElement('div');
+          wrapper.className = 'scroll-row';
+          group.vids.forEach(v => {
+            loadedVideos.donghua.add(v.snippet.resourceId.videoId);
+            wrapper.appendChild(createCard(v));
+          });
+          container.appendChild(heading);
+          container.appendChild(wrapper);
+        });
+      }
+
+      // Default grouped rendering for anim3 (alphabetical order)
+      if (section === 'anim3' && data.grouped) {
+        const keys = Object.keys(data.grouped).sort();
+        for (const group of keys) {
+          const vids = data.grouped[group].filter(v => !loadedVideos.anim3.has(v.snippet.resourceId.videoId));
+          if (!vids.length) continue;
+          const heading = document.createElement('div');
+          heading.className = 'group-heading';
+          heading.textContent = group;
+          const wrapper = document.createElement('div');
+          wrapper.className = 'scroll-row';
+          vids.forEach(v => {
+            loadedVideos.anim3.add(v.snippet.resourceId.videoId);
+            wrapper.appendChild(createCard(v));
+          });
+          container.appendChild(heading);
+          container.appendChild(wrapper);
+        }
+      }
+
+      // Mixed for all (always shown last)
       const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
       if (mixed.length) {
         const heading = document.createElement('div');
@@ -312,12 +334,10 @@ make updaate here and give full coe - <!DOCTYPE html>
         heading.textContent = 'Mixed';
         const wrapper = document.createElement('div');
         wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
         mixed.forEach(v => {
           loadedVideos[section].add(v.snippet.resourceId.videoId);
           wrapper.appendChild(createCard(v));
         });
-
         container.appendChild(heading);
         container.appendChild(wrapper);
       }
@@ -332,32 +352,28 @@ make updaate here and give full coe - <!DOCTYPE html>
 
     function submitAuth() {
       const mode = document.getElementById("authForm").getAttribute("data-mode");
-      const username = document.getElementById("authUsername").value.trim();
-      const password = document.getElementById("authPassword").value;
-      if (!username || !password) return showMsg("Fill all fields");
+      const u = document.getElementById("authUsername").value.trim();
+      const p = document.getElementById("authPassword").value;
+      if (!u || !p) return showMsg("Fill all fields");
       const users = JSON.parse(localStorage.getItem("users") || "{}");
       if (mode === "signup") {
-        if (users[username]) return showMsg("User already exists");
-        users[username] = password;
+        if (users[u]) return showMsg("User exists");
+        users[u] = p;
       } else {
-        if (users[username] !== password) return showMsg("Invalid credentials");
+        if (users[u] !== p) return showMsg("Invalid credentials");
       }
       localStorage.setItem("users", JSON.stringify(users));
-      localStorage.setItem("loggedInUser", username);
+      localStorage.setItem("loggedInUser", u);
       hideAuthUI();
     }
 
-    function showMsg(msg) {
-      document.getElementById("authMessage").textContent = msg;
-    }
-
+    function showMsg(m) { document.getElementById("authMessage").textContent = m; }
     function hideAuthUI() {
       document.getElementById("authForm").style.display = "none";
       document.getElementById("loginBtn").style.display = "none";
       document.getElementById("signupBtn").style.display = "none";
       document.getElementById("logoutBtn").style.display = "inline-block";
     }
-
     function logout() {
       localStorage.removeItem("loggedInUser");
       document.getElementById("loginBtn").style.display = "inline-block";
@@ -368,16 +384,10 @@ make updaate here and give full coe - <!DOCTYPE html>
     function showModal(video) {
       const vid = video.snippet.resourceId.videoId;
       document.getElementById("modal-title").textContent = video.snippet.title;
-      document.getElementById("modal-video").innerHTML = `
-        <iframe 
-          src="https://www.youtube.com/embed/${vid}?autoplay=1"
-          frameborder="0"
-          allow="fullscreen; autoplay"
-          allowfullscreen
-        ></iframe>`;
+      document.getElementById("modal-video").innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
       document.getElementById("modal-description").textContent = video.snippet.description;
       document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
-      document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments on YouTube</a>`;
+      document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments</a>`;
       document.getElementById("videoModal").style.display = "flex";
     }
 
