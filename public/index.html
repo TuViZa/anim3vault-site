@@ -102,12 +102,11 @@
     .group-heading {
       background: black;
       color: white;
-      font-size: 1.3em;
-      font-weight: bold;
       padding: 10px 16px;
-      margin: 20px 0 10px 0;
+      font-size: 1.2em;
+      font-weight: bold;
       width: 100%;
-      box-sizing: border-box;
+      margin: 20px 0 10px 0;
     }
     .modal {
       display: none;
@@ -201,16 +200,15 @@
     let pageTokens = { anim3: '', donghua: '', news: '' };
     const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
-    function showScreen(screenId, btn) {
+    function showScreen(id, btn) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
+      document.getElementById(id).classList.add('active');
       document.querySelectorAll('.nav-buttons .btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
 
     async function fetchVideos(type) {
-      const pageToken = pageTokens[type] || '';
-      const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageToken}`);
+      const res = await fetch(`/api/fetch-videos?type=${type}&pageToken=${pageTokens[type]}`);
       const data = await res.json();
       pageTokens[type] = data.nextPage || '';
       return data;
@@ -227,25 +225,8 @@
         </div>
         <div class="video-title">${video.snippet.title}</div>
       `;
-      card.querySelector('img').addEventListener('click', () => showModal(video));
+      card.querySelector('img').onclick = () => showModal(video);
       return card;
-    }
-
-    async function loadFlat(section, containerId) {
-      const container = document.getElementById(containerId);
-      const loading = container.previousElementSibling;
-      loading.textContent = "Loading...";
-      const data = await fetchVideos(section);
-      loading.style.display = 'none';
-      const wrapper = document.createElement('div');
-      wrapper.className = 'scroll-row';
-      data.mixed.forEach(v => {
-        const id = v.snippet.resourceId.videoId;
-        if (loadedVideos[section].has(id)) return;
-        loadedVideos[section].add(id);
-        wrapper.appendChild(createCard(v));
-      });
-      container.appendChild(wrapper);
     }
 
     async function loadGrouped(section, containerId) {
@@ -255,47 +236,47 @@
       const data = await fetchVideos(section);
       loading.style.display = 'none';
 
-      Object.keys(data.grouped).sort().forEach(group => {
-        const groupWrapper = document.createElement('div');
-        groupWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-        data.grouped[group].forEach(v => {
-          const id = v.snippet.resourceId.videoId;
-          if (loadedVideos[section].has(id)) return;
-          loadedVideos[section].add(id);
-          groupWrapper.appendChild(createCard(v));
-        });
+      if (section !== 'news') {
+        for (const group of Object.keys(data.grouped || {}).sort()) {
+          const vids = data.grouped[group].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+          if (!vids.length) continue;
 
-        if (section !== 'news') {
           const heading = document.createElement('div');
           heading.className = 'group-heading';
           heading.textContent = group;
-          container.appendChild(heading);
-        }
-        container.appendChild(groupWrapper);
-      });
+          const wrapper = document.createElement('div');
+          wrapper.className = 'scroll-row';
 
-      if (data.mixed && data.mixed.length) {
-        const row = document.createElement('div');
-        row.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-        data.mixed.forEach(v => {
-          const id = v.snippet.resourceId.videoId;
-          if (loadedVideos[section].has(id)) return;
-          loadedVideos[section].add(id);
-          row.appendChild(createCard(v));
-        });
-        if (section !== 'news') {
-          const heading = document.createElement('div');
-          heading.className = 'group-heading';
-          heading.textContent = 'Mixed';
+          vids.forEach(v => {
+            loadedVideos[section].add(v.snippet.resourceId.videoId);
+            wrapper.appendChild(createCard(v));
+          });
+
           container.appendChild(heading);
+          container.appendChild(wrapper);
         }
-        container.appendChild(row);
+      }
+
+      const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+      if (mixed.length) {
+        const heading = document.createElement('div');
+        heading.className = 'group-heading';
+        heading.textContent = 'Mixed';
+        const wrapper = document.createElement('div');
+        wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+        mixed.forEach(v => {
+          loadedVideos[section].add(v.snippet.resourceId.videoId);
+          wrapper.appendChild(createCard(v));
+        });
+
+        container.appendChild(heading);
+        container.appendChild(wrapper);
       }
     }
 
-    function loadMore(type) {
-      if (type === 'anim3') loadFlat(type, `${type}-videos`);
-      else loadGrouped(type, `${type}-videos`);
+    function loadMore(section) {
+      loadGrouped(section, `${section}-videos`);
     }
 
     function toggleAuthForm(mode) {
@@ -343,20 +324,10 @@
     function showModal(video) {
       const vid = video.snippet.resourceId.videoId;
       document.getElementById("modal-title").textContent = video.snippet.title;
-      document.getElementById("modal-video").innerHTML = `
-        <iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>
-      `;
+      document.getElementById("modal-video").innerHTML = `<iframe src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`;
       document.getElementById("modal-description").textContent = video.snippet.description;
-      document.getElementById("modal-channel").innerHTML = `
-        <a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">
-          Visit ${video.snippet.channelTitle}'s channel
-        </a>
-      `;
-      document.getElementById("modal-comments").innerHTML = `
-        <a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">
-          View Comments on YouTube
-        </a>
-      `;
+      document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
+      document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${vid}#comments" target="_blank">View Comments on YouTube</a>`;
       document.getElementById("videoModal").style.display = "flex";
     }
 
@@ -367,7 +338,7 @@
 
     window.onload = () => {
       if (localStorage.getItem("loggedInUser")) hideAuthUI();
-      loadFlat("anim3", "anim3-videos");
+      loadGrouped("anim3", "anim3-videos");
       loadGrouped("donghua", "donghua-videos");
       loadGrouped("news", "news-videos");
     };
