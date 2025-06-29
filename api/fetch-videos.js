@@ -45,28 +45,35 @@ export default async function handler(req, res) {
     }
 
     for (let v of items) {
-      const title = v.snippet?.title || "";
-      const id = v.snippet?.resourceId?.videoId;
+      const snippet = v.snippet;
+      const title = snippet?.title || "";
+      const id = snippet?.resourceId?.videoId;
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
       let matched = false;
-      for (let keyword of DONGHUA_TITLES) {
-        if (titleMatches(title, keyword)) {
-          grouped[keyword].push(v);
-          matched = true;
-          break;
+      if (type === "donghua") {
+        for (let keyword of DONGHUA_TITLES) {
+          if (titleMatches(title, keyword)) {
+            grouped[keyword].push(v);
+            matched = true;
+            break;
+          }
         }
       }
+
       if (!matched) mixed.push(v);
       addedIds.add(id);
     }
 
-    latest.push(...[...items]
-      .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
-      .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
-      .slice(0, 20));
+    if (type === "anim3" || type === "donghua") {
+      latest.push(...[...items]
+        .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
+        .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
+        .slice(0, 20));
+    }
 
-    return res.status(200).json({ grouped, mixed, latest });
+    return res.status(200).json({ latest, grouped, mixed });
+
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
