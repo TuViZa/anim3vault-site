@@ -17,6 +17,11 @@ const DONGHUA_TITLES = [
   "mo-tian records", "lord of mysteries", "above the kingdom of god"
 ];
 
+// Helper to normalize titles for better fuzzy matching
+function normalize(str) {
+  return str.toLowerCase().replace(/[^a-z0-9]/gi, '');
+}
+
 export default async function handler(req, res) {
   const { type = "donghua" } = req.query;
   const playlistId = PLAYLISTS[type];
@@ -41,9 +46,10 @@ export default async function handler(req, res) {
       let matched = false;
       if (type === "donghua") {
         for (let keyword of DONGHUA_TITLES) {
-          if (title.toLowerCase().includes(keyword.toLowerCase())) {
+          if (normalize(title).includes(normalize(keyword))) {
             grouped[keyword].push(v);
             matched = true;
+            break;
           }
         }
       }
@@ -70,7 +76,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ grouped: sortedGrouped, mixed });
     }
 
-    // For anim3 or news, return only mixed (news has no groups)
+    // For anim3 or news, return only mixed
     return res.status(200).json({ grouped: {}, mixed });
 
   } catch (e) {
