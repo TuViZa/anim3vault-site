@@ -51,8 +51,8 @@
   </div>
 
   <div class="nav-buttons">
-    <a class="btn active" onclick="showScreen('anim3', this)">Anim3</a>
-    <a class="btn" onclick="showScreen('donghua', this)">Donghua</a>
+    <a class="btn" onclick="showScreen('anim3', this)">Anim3</a>
+    <a class="btn active" onclick="showScreen('donghua', this)">Donghua</a>
     <a class="btn" onclick="showScreen('news', this)">News</a>
   </div>
 
@@ -130,7 +130,7 @@
     container.innerHTML = '';
 
     // LATEST
-    if (section !== 'news' && latestData?.length) {
+    if (section !== 'news' && latestData?.latest?.length) {
       const latestHeading = document.createElement('div');
       latestHeading.className = 'group-heading red';
       latestHeading.textContent = 'LATEST';
@@ -138,7 +138,7 @@
       const latestRow = document.createElement('div');
       latestRow.className = 'scroll-row';
 
-      latestData.forEach(v => {
+      latestData.latest.forEach(v => {
         const vid = v.snippet.resourceId.videoId;
         if (!loadedVideos[section].has(vid)) {
           loadedVideos[section].add(vid);
@@ -182,7 +182,14 @@
       heading.textContent = 'Mixed';
 
       const wrapper = document.createElement('div');
-      wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+if (section === 'news') {
+  wrapper.style.alignItems = 'flex-end'; // ensures video cards align right
+  wrapper.style.display = 'flex';
+  wrapper.style.flexDirection = 'column';
+}
+
 
       mixed.forEach(v => {
         const vid = v.snippet.resourceId.videoId;
