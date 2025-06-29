@@ -419,6 +419,28 @@ async function loadGrouped(section, containerId) {
 
   // Extract and insert the "LATEST" group
   const latestVideos = [...(data.latest || [])].filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId)).slice(0, 20);
+  // Render LATEST group
+if (data.latest && data.latest.length) {
+  const latestHeading = document.createElement('div');
+  latestHeading.className = 'group-heading';
+  latestHeading.style.backgroundColor = 'red';
+  latestHeading.style.color = 'black';
+  latestHeading.textContent = 'LATEST';
+
+  const latestWrapper = document.createElement('div');
+  latestWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+
+  data.latest.forEach(v => {
+    if (!loadedVideos[section].has(v.snippet.resourceId.videoId)) {
+      loadedVideos[section].add(v.snippet.resourceId.videoId);
+      latestWrapper.appendChild(createCard(v));
+    }
+  });
+
+  container.appendChild(latestHeading);
+  container.appendChild(latestWrapper);
+}
+
   if (latestVideos.length) {
     const latestWrapper = document.createElement('div');
     latestWrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
