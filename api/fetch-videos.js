@@ -39,12 +39,9 @@ export default async function handler(req, res) {
     const addedIds = new Set();
     const grouped = {};
     const latest = [];
-    const mixed = [];
 
-    if (type === 'donghua') {
-      for (let keyword of DONGHUA_TITLES) {
-        grouped[keyword] = [];
-      }
+    for (let keyword of DONGHUA_TITLES) {
+      grouped[keyword] = [];
     }
 
     for (let v of items) {
@@ -53,43 +50,22 @@ export default async function handler(req, res) {
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
       let matched = false;
-      if (type === 'donghua') {
-        for (let keyword of DONGHUA_TITLES) {
-          if (titleMatches(title, keyword)) {
-            grouped[keyword].push(v);
-            matched = true;
-            break;
-          }
+      for (let keyword of DONGHUA_TITLES) {
+        if (titleMatches(title, keyword)) {
+          grouped[keyword].push(v);
+          matched = true;
+          break;
         }
-        // Unmatched videos are ignored for donghua
-      } else {
-        // For anim3 and news, everything goes in mixed if unmatched
-        matched = false;
       }
-
-      if (!matched && type !== 'donghua') {
-        mixed.push(v);
-      }
-
-      if (matched || type !== 'donghua') {
-        addedIds.add(id);
-      }
+      addedIds.add(id);
     }
 
-    // Sort items by publishedAt and take top 20 for LATEST
     latest.push(...[...items]
       .filter(v => v.snippet?.publishedAt && v.snippet?.resourceId?.videoId)
       .sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
       .slice(0, 20));
 
-    const responseData = { grouped, latest };
-
-    if (type === 'anim3' || type === 'news') {
-      responseData.mixed = mixed;
-    }
-
-    return res.status(200).json(responseData);
-
+    return res.status(200).json({ grouped, latest });
   } catch (e) {
     console.error("Fetch error:", e);
     return res.status(500).json({ error: e.message });
