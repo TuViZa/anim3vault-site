@@ -121,7 +121,7 @@ async function loadGrouped(section, containerId) {
   const loading = container.previousElementSibling;
   if (loading) loading.textContent = "Loading...";
   const data = await fetchVideos(section);
-  if (loading) loading.style.display = 'none';
+  if (loading) loading.style.display = "none";
   container.innerHTML = '';
 
   // 1. LATEST
@@ -132,8 +132,8 @@ async function loadGrouped(section, containerId) {
     const wrap = document.createElement('div');
     wrap.className = 'scroll-row';
     data.latest.forEach(v => {
-      const vid = v.snippet.resourceId.videoId;
-      if (!loadedVideos[section].has(vid)) {
+      const vid = v.snippet?.resourceId?.videoId;
+      if (vid && !loadedVideos[section].has(vid)) {
         loadedVideos[section].add(vid);
         wrap.appendChild(createCard(v));
       }
@@ -141,11 +141,13 @@ async function loadGrouped(section, containerId) {
     container.append(h, wrap);
   }
 
-  // 2. DONGHUA groups
-  if (section === 'donghua' && data.grouped) {
+  // 2. DONGHUA GROUPS (only if section is 'donghua' and grouped exists)
+  if (section === 'donghua' && data.grouped && Object.keys(data.grouped).length > 0) {
+    console.log("Donghua groups:", Object.entries(data.grouped).map(([k,v]) => [k, v.length])); // 🔍 Debug line
+
     Object.entries(data.grouped)
       .map(([name, vids]) => {
-        const fresh = vids.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+        const fresh = vids.filter(v => !loadedVideos[section].has(v.snippet?.resourceId?.videoId));
         const latestTime = fresh.length
           ? Math.max(...fresh.map(v => new Date(v.snippet.publishedAt).getTime()))
           : 0;
@@ -160,8 +162,8 @@ async function loadGrouped(section, containerId) {
         const wrap = document.createElement('div');
         wrap.className = 'scroll-row';
         g.vids.forEach(v => {
-          const vid = v.snippet.resourceId.videoId;
-          if (!loadedVideos[section].has(vid)) {
+          const vid = v.snippet?.resourceId?.videoId;
+          if (vid && !loadedVideos[section].has(vid)) {
             loadedVideos[section].add(vid);
             wrap.appendChild(createCard(v));
           }
@@ -171,7 +173,7 @@ async function loadGrouped(section, containerId) {
   }
 
   // 3. Mixed
-  const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+  const mixed = (data.mixed || []).filter(v => !loadedVideos[section].has(v.snippet?.resourceId?.videoId));
   if (mixed.length) {
     const h = document.createElement('div');
     h.className = 'group-heading';
@@ -179,13 +181,16 @@ async function loadGrouped(section, containerId) {
     const wrap = document.createElement('div');
     wrap.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
     mixed.forEach(v => {
-      const vid = v.snippet.resourceId.videoId;
-      loadedVideos[section].add(vid);
-      wrap.appendChild(createCard(v));
+      const vid = v.snippet?.resourceId?.videoId;
+      if (vid) {
+        loadedVideos[section].add(vid);
+        wrap.appendChild(createCard(v));
+      }
     });
     container.append(h, wrap);
   }
 }
+
 
 
   function showModal(v) {
