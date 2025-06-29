@@ -235,6 +235,21 @@ header {
 
 .video-thumb img {
   width: 100%;
-  height: auto;
+  height: 160px; /* Reduce from full height to a fixed smaller one */
+  object-fit: cover;
   display: block;
 }
+.video-card {
+  background: #1a1a1a;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  width: 240px; /* You can reduce from 280px if desired */
+  scroll-snap-align: start;
+}
+.video-title {
+  padding: 8px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
