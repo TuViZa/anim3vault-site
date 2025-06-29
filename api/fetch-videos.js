@@ -40,10 +40,8 @@ export default async function handler(req, res) {
     const mixed = [];
     const latest = [];
 
-    if (type === "donghua") {
-      for (let keyword of DONGHUA_TITLES) {
-        grouped[keyword] = [];
-      }
+    for (let keyword of DONGHUA_TITLES) {
+      grouped[keyword] = [];
     }
 
     for (let v of items) {
@@ -52,13 +50,11 @@ export default async function handler(req, res) {
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
       let matched = false;
-      if (type === "donghua") {
-        for (let keyword of DONGHUA_TITLES) {
-          if (titleMatches(title, keyword)) {
-            grouped[keyword].push(v);
-            matched = true;
-            break;
-          }
+      for (let keyword of DONGHUA_TITLES) {
+        if (titleMatches(title, keyword)) {
+          grouped[keyword].push(v);
+          matched = true;
+          break;
         }
       }
       if (!matched) mixed.push(v);
