@@ -11,7 +11,7 @@ const DONGHUA_TITLES = [
   "Supreme god emperor", "Swallowed star", "Stellar transformations", "My senior brother is too strong",
   "Ten thousand worlds", "One hundred thousand years of Qi Training", "Martial master",
   "Spirit sword sovereign", "A will eternal", "Shrouding The Heavens", "immortal Doctor in Modern City",
-  "Throne of seal", "Jade dynasty", "Embers", "The all devouring whale", "Perfect world",
+  "Throne of seal", "Jade dynasty", "Embers", "all-devouring whale", "Perfect world",
   "Soul land 2", "Laid off demon", "Strongest upgrade", "Immortal ascension",
   "Battle through the heavens", "Tales of herding gods", "Renegade immortal", "Peerless soul",
   "mo-tian records", "lord of mysteries", "above the kingdom of god"
