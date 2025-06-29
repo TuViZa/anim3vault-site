@@ -226,3 +226,15 @@ header {
   flex-direction: column;
   gap: 10px;
 }
+.video-thumb {
+  position: relative;
+  width: 100%;
+  padding-top: 0; /* remove aspect ratio padding */
+  background: #000;
+}
+
+.video-thumb img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
