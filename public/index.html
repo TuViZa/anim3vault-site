@@ -168,28 +168,37 @@
 <div id="news" class="screen"><div class="loading">Loading...</div><div id="news-videos"></div></div>
 
 <!-- Modal with YouTube Player and Custom Controls -->
-<div id="videoModal" class="modal" onclick="closeModal(event)">
+  <div id="videoModal" class="modal" onclick="closeModal(event)">
   <div class="modal-content" onclick="event.stopPropagation()">
     <span class="close-btn" onclick="closeModal()">&times;</span>
-    <div id="modal-title"></div>
-    <div class="yt-wrapper" id="yt-wrapper">
-  <div id="yt-player"></div>
+    <div id="modal-title" style="padding: 10px; font-weight: bold;"></div>
 
-  <!-- Overlaid Controls -->
-  <div class="yt-controls" id="yt-controls">
-    <div class="yt-timebar" onclick="seek(event)">
-      <div class="yt-timebar-fill" id="yt-progress"></div>
+    <div class="yt-wrapper" id="yt-wrapper">
+      <div id="yt-player"></div>
+
+      <!-- Overlaid Controls -->
+      <div class="yt-controls" id="yt-controls">
+        <div class="yt-timebar" onclick="seek(event)">
+          <div class="yt-timebar-fill" id="yt-progress"></div>
+        </div>
+        <div class="yt-time" id="yt-time">0:00 / 0:00</div>
+        <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()-10,true)">⏪ 10s</button>
+        <button onclick="ytPlayer.playVideo()">▶</button>
+        <button onclick="ytPlayer.pauseVideo()">⏸</button>
+        <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()+10,true)">10s ⏩</button>
+        <input type="range" min="0" max="100" value="100" class="yt-volume-slider" onchange="setVolume(this.value)" />
+        <button onclick="toggleCaptions()">CC</button>
+        <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
+      </div>
     </div>
-    <div class="yt-time" id="yt-time">0:00 / 0:00</div>
-    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()-10,true)">⏪ 10s</button>
-    <button onclick="ytPlayer.playVideo()">▶</button>
-    <button onclick="ytPlayer.pauseVideo()">⏸</button>
-    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()+10,true)">10s ⏩</button>
-    <input type="range" min="0" max="100" value="100" class="yt-volume-slider" onchange="setVolume(this.value)" />
-    <button onclick="toggleCaptions()">CC</button>
-    <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
+
+    <!-- These were missing -->
+    <div id="modal-description" style="padding: 10px;"></div>
+    <div id="modal-channel" style="padding: 10px;"></div>
+    <div id="modal-comments" style="padding: 10px;"></div>
   </div>
 </div>
+
 
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
