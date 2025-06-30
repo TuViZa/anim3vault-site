@@ -220,33 +220,36 @@ function showModal(video) {
   document.getElementById("modal-description").textContent = video.snippet.description;
   document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
   document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${currentVideoId}#comments" target="_blank">View Comments on YouTube</a>`;
-  document.getElementById("modal-video").innerHTML = `<div id="yt-player"></div>
-    <div class="yt-controls">
-      <button onclick="ytPlayer.playVideo()">▶</button>
-      <button onclick="ytPlayer.pauseVideo()">⏸</button>
-      <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime() - 10, true)">⏪ 10s</button>
-      <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime() + 10, true)">10s ⏩</button>
-      <button onclick="toggleMute()">🔊</button>
-      <span id="yt-time">0:00 / 0:00</span>
-      <button onclick="toggleCaptions()">CC</button>
-      <select onchange="setPlaybackQuality(this.value)">
-        <option disabled selected>Quality</option>
-        <option value="small">240p</option>
-        <option value="medium">360p</option>
-        <option value="large">480p</option>
-        <option value="hd720">720p</option>
-        <option value="hd1080">1080p</option>
-      </select>
-      <select onchange="setPlaybackRate(this.value)">
-        <option disabled selected>Speed</option>
-        <option value="0.25">0.25x</option>
-        <option value="0.5">0.5x</option>
-        <option value="1" selected>1x</option>
-        <option value="1.5">1.5x</option>
-        <option value="2">2x</option>
-      </select>
-      <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
-    </div>`;
+  document.getElementById("modal-video").innerHTML = `<div class="yt-wrapper">
+  <div id="yt-player"></div>
+  <div class="yt-controls">
+    <button onclick="ytPlayer.playVideo()">▶</button>
+    <button onclick="ytPlayer.pauseVideo()">⏸</button>
+    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime() - 10, true)">⏪ 10s</button>
+    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime() + 10, true)">10s ⏩</button>
+    <button onclick="toggleMute()">🔊</button>
+    <span id="yt-time">0:00 / 0:00</span>
+    <button onclick="toggleCaptions()">CC</button>
+    <select onchange="setPlaybackQuality(this.value)">
+      <option disabled selected>Quality</option>
+      <option value="small">240p</option>
+      <option value="medium">360p</option>
+      <option value="large">480p</option>
+      <option value="hd720">720p</option>
+      <option value="hd1080">1080p</option>
+    </select>
+    <select onchange="setPlaybackRate(this.value)">
+      <option disabled selected>Speed</option>
+      <option value="0.25">0.25x</option>
+      <option value="0.5">0.5x</option>
+      <option value="1" selected>1x</option>
+      <option value="1.5">1.5x</option>
+      <option value="2">2x</option>
+    </select>
+    <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
+  </div>
+</div>
+`;
 
   document.getElementById("videoModal").style.display = "flex";
   if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(() => {});
