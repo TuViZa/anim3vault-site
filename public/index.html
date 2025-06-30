@@ -5,88 +5,180 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Anim3Vault</title>
   <style>
-    body { margin:0; font-family:'Segoe UI',sans-serif; background:#000; color:white; overflow-x:hidden; }
-    header { position:sticky; top:0; background:#111; padding:10px; text-align:center; font-size:1.8em; z-index:1000; }
-    .nav-buttons { display:flex; justify-content:center; background:#222; flex-wrap:wrap; }
-    .nav-buttons .btn { color:white; padding:10px; margin:5px; background:#444; border-radius:8px; cursor:pointer; }
-    .nav-buttons .btn.active { background:#f0f; color:black; }
-    .screen { display:none; padding:10px; }
-    .screen.active { display:block; }
-    #anim3 { background:#18112b; }
-    #donghua { background:#12243b; }
-    #news { background:#2b1414; }
-    .scroll-row { display:flex; overflow-x:auto; gap:16px; padding-bottom:10px; }
-    .vertical-scroll { display:flex; flex-direction:column; gap:16px; max-height:75vh; overflow-y:auto; }
-    .group-heading { background:black; color:white; padding:10px 16px; font-size:1.2em; margin:20px 0 10px; }
-    .group-heading.red { background:red; color:black; }
-    .video-card { background:#1a1a1a; border-radius:10px; width:280px; flex-shrink:0; overflow:hidden; }
-    .video-thumb img { width:100%; cursor:pointer; aspect-ratio:16/9; object-fit:cover; }
-    .video-title { padding:10px; text-align:center; }
-    .modal { display:none; position:fixed; top:0;left:0;width:100vw;height:100vh; background:rgba(0,0,0,0.9); justify-content:center; align-items:center; z-index:9999; }
-    .modal-content { background:#111; padding:15px; border-radius:8px; max-width:900px; width:90vw; }
-    .modal-content iframe, #yt-player { width:100%; aspect-ratio:16/9; }
-    .close-btn { float:right; font-size:24px; color:#f0f; cursor:pointer; }
-    .auth-buttons { position:absolute; right:20px; top:10px; }
-    .auth-buttons button { margin-left:8px; padding:6px 10px; background:#444; color:white; border:none; border-radius:6px; cursor:pointer; }
-    .auth-form { background:#111; padding:15px; max-width:300px; margin:10px auto; border-radius:10px; }
-    .auth-form input { width:100%; margin-bottom:10px; padding:8px; border:none; border-radius:4px; }
-    .yt-controls { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; align-items:center; justify-content:center; }
-    .yt-controls button, .yt-controls select { padding:6px 10px; background:#333; color:white; border:none; border-radius:4px; cursor:pointer; }
-    .yt-controls span { margin:0 8px; font-weight:bold; }
+    :root {
+      --grad: linear-gradient(to right, #f0f, #0ff);
+      --neon: #0ff;
+      --pink: #f0f;
+    }
+    body {
+      margin: 0; background: #000; color: white; font-family: 'Segoe UI', sans-serif;
+    }
+    header {
+      position: sticky; top: 0; background: #111; padding: 10px;
+      font-size: 1.8em; text-align: center; z-index: 1000;
+    }
+    .auth-buttons { position: absolute; right: 20px; top: 10px; }
+    .auth-buttons button {
+      background: #444; color: white; border: none;
+      padding: 6px 10px; border-radius: 6px; margin-left: 8px; cursor: pointer;
+    }
+    .nav-buttons { display: flex; justify-content: center; flex-wrap: wrap; background: #222; }
+    .nav-buttons .btn {
+      background: #444; color: white; padding: 10px; margin: 5px;
+      border-radius: 8px; cursor: pointer;
+    }
+    .nav-buttons .btn.active { background: var(--pink); color: black; }
+    .screen { display: none; padding: 10px; }
+    .screen.active { display: block; }
+    #anim3 { background: #18112b; }
+    #donghua { background: #12243b; }
+    #news { background: #2b1414; }
+
+    .group-heading {
+      background: black; padding: 10px 16px; font-size: 1.2em; margin: 20px 0 10px;
+    }
+    .group-heading.red { background: red; color: black; }
+
+    .scroll-row {
+      display: flex; overflow-x: auto; gap: 16px; padding-bottom: 10px;
+    }
+    .vertical-scroll {
+      display: flex; flex-direction: column; gap: 16px;
+      max-height: 75vh; overflow-y: auto;
+    }
+    .video-card {
+      background: #1a1a1a; border-radius: 10px; width: 280px; flex-shrink: 0;
+    }
+    .video-thumb img {
+      width: 100%; cursor: pointer; aspect-ratio: 16/9; object-fit: cover;
+    }
+    .video-title { padding: 10px; text-align: center; }
+
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.9); justify-content: center; align-items: center; z-index: 9999;
+    }
+    .modal-content {
+      position: relative; width: 90vw; max-width: 900px;
+    }
+    #yt-player { width: 100%; aspect-ratio: 16/9; }
+    .close-btn {
+      position: absolute; top: -20px; right: 0;
+      font-size: 30px; color: var(--pink); cursor: pointer;
+    }
+
+    /* ===== Player Overlay Controls ===== */
+    .yt-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+    }
+    .yt-controls {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+      display: flex; flex-wrap: wrap; gap: 10px;
+      align-items: center; justify-content: center;
+      transition: opacity 0.3s;
+    }
+    .yt-controls.hide { opacity: 0; pointer-events: none; }
+
+    .yt-controls button, .yt-controls select {
+      background: transparent;
+      color: white;
+      border: 2px solid var(--neon);
+      border-radius: 50px;
+      padding: 6px 12px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .yt-timebar {
+      position: absolute; bottom: 50px; left: 10px; right: 10px;
+      height: 8px; border-radius: 10px; background: #222;
+      cursor: pointer;
+    }
+    .yt-timebar-fill {
+      height: 100%; width: 0%;
+      background: var(--grad);
+      border-radius: 10px;
+    }
+
+    .yt-time {
+      color: white; position: absolute; left: 15px; bottom: 75px;
+      font-weight: bold;
+    }
+
+    .yt-volume-slider {
+      appearance: none; width: 100px; height: 8px;
+      background: #333; border-radius: 5px;
+      background-image: var(--grad);
+      background-size: 100% 100%; background-repeat: no-repeat;
+      cursor: pointer;
+    }
+    .yt-volume-slider::-webkit-slider-thumb {
+      appearance: none; width: 16px; height: 16px;
+      background: white; border-radius: 50%;
+      border: 2px solid var(--pink);
+    }
   </style>
 </head>
 <body>
-  <header>Anim3Vault
-    <div class="auth-buttons">
-      <button id="loginBtn" onclick="toggleAuthForm('login')">Login</button>
-      <button id="signupBtn" onclick="toggleAuthForm('signup')">Signup</button>
-      <button id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
+<header>Anim3Vault
+  <div class="auth-buttons">
+    <button id="loginBtn" onclick="toggleAuthForm('login')">Login</button>
+    <button id="signupBtn" onclick="toggleAuthForm('signup')">Signup</button>
+    <button id="logoutBtn" onclick="logout()" style="display:none">Logout</button>
+  </div>
+</header>
+
+<div class="auth-form" id="authForm" style="display:none;">
+  <div id="authTitle">Login</div>
+  <input id="authUsername" placeholder="Username" />
+  <input type="password" id="authPassword" placeholder="Password" />
+  <button onclick="submitAuth()">Submit</button>
+  <div id="authMessage" style="color:red;"></div>
+</div>
+
+<div class="nav-buttons">
+  <a class="btn active" onclick="showScreen('anim3', this)">Anim3</a>
+  <a class="btn" onclick="showScreen('donghua', this)">Donghua</a>
+  <a class="btn" onclick="showScreen('news', this)">News</a>
+</div>
+
+<div id="anim3" class="screen active"><div class="loading">Loading...</div><div id="anim3-videos"></div></div>
+<div id="donghua" class="screen"><div class="loading">Loading...</div><div id="donghua-videos"></div></div>
+<div id="news" class="screen"><div class="loading">Loading...</div><div id="news-videos"></div></div>
+
+<!-- Modal with YouTube Player and Custom Controls -->
+<div id="videoModal" class="modal" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <div id="modal-title"></div>
+    <div class="yt-wrapper">
+      <div id="yt-player"></div>
+      <div class="yt-timebar" onclick="seek(event)">
+        <div class="yt-timebar-fill" id="yt-progress"></div>
+      </div>
+      <div class="yt-time" id="yt-time">0:00 / 0:00</div>
+      <div class="yt-controls" id="yt-controls">
+        <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()-10,true)">⏪ 10s</button>
+        <button onclick="ytPlayer.playVideo()">▶</button>
+        <button onclick="ytPlayer.pauseVideo()">⏸</button>
+        <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()+10,true)">10s ⏩</button>
+        <input type="range" min="0" max="100" value="100" class="yt-volume-slider" onchange="setVolume(this.value)" />
+        <button onclick="toggleCaptions()">CC</button>
+        <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
+      </div>
     </div>
-  </header>
-
-  <div class="auth-form" id="authForm" style="display:none;">
-    <div id="authTitle">Login</div>
-    <input id="authUsername" placeholder="Username" />
-    <input type="password" id="authPassword" placeholder="Password" />
-    <button onclick="submitAuth()">Submit</button>
-    <div id="authMessage" style="color:red;"></div>
+    <div id="modal-description"></div>
+    <div id="modal-channel"></div>
+    <div id="modal-comments"></div>
   </div>
-
-  <div class="nav-buttons">
-    <a class="btn" onclick="showScreen('anim3', this)">Anim3</a>
-    <a class="btn active" onclick="showScreen('donghua', this)">Donghua</a>
-    <a class="btn" onclick="showScreen('news', this)">News</a>
-  </div>
-
-  <div id="anim3" class="screen">
-    <div class="loading">Loading Anim3...</div>
-    <div id="anim3-videos"></div>
-  </div>
-
-  <div id="donghua" class="screen active">
-    <div class="loading">Loading Donghua...</div>
-    <div id="donghua-videos"></div>
-  </div>
-
-  <div id="news" class="screen">
-    <div class="loading">Loading News...</div>
-    <div id="news-videos"></div>
-  </div>
-
-  <div id="videoModal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <span class="close-btn" onclick="closeModal()">&times;</span>
-      <h2 id="modal-title"></h2>
-      <div id="modal-video"></div>
-      <p id="modal-description"></p>
-      <div id="modal-channel"></div>
-      <div id="modal-comments"></div>
-    </div>
-  </div>
-
-  <script src="https://www.youtube.com/iframe_api"></script>
+</div>
+<script src="https://www.youtube.com/iframe_api"></script>
 <script>
-let ytPlayer, currentVideoId = null;
+let ytPlayer = null, currentVideoId = null;
+let hideTimeout = null;
 const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
 function showScreen(id, btn) {
@@ -101,18 +193,15 @@ async function fetchGrouped(type) {
     const res = await fetch(`/api/fetch-grouped?type=${type}`);
     return await res.json();
   } catch (err) {
-    console.error('Error fetching grouped data:', err);
-    return {};
+    console.error(err); return {};
   }
 }
-
 async function fetchLatest(type) {
   try {
     const res = await fetch(`/api/fetch-latest?type=${type}`);
     return await res.json();
   } catch (err) {
-    console.error('Error fetching latest data:', err);
-    return {};
+    console.error(err); return {};
   }
 }
 
@@ -120,14 +209,9 @@ function createCard(video) {
   const card = document.createElement('div');
   card.className = 'video-card';
   const vid = video.snippet.resourceId.videoId;
-  const thumbnail = video.snippet.thumbnails.medium.url;
+  const thumb = video.snippet.thumbnails.medium.url;
   const title = video.snippet.title;
-  card.innerHTML = `
-    <div class="video-thumb">
-      <img src="${thumbnail}" alt="Thumbnail for ${title}" />
-    </div>
-    <div class="video-title">${title}</div>
-  `;
+  card.innerHTML = `<div class="video-thumb"><img src="${thumb}" alt="Thumbnail for ${title}"></div><div class="video-title">${title}</div>`;
   card.querySelector('img').onclick = () => showModal(video);
   return card;
 }
@@ -135,214 +219,150 @@ function createCard(video) {
 async function loadGrouped(section, containerId) {
   const container = document.getElementById(containerId);
   const loading = container.previousElementSibling;
-  if (loading) loading.textContent = "Loading...";
-
-  const [latestData, groupedData] = await Promise.all([
-    fetchLatest(section),
-    fetchGrouped(section)
-  ]);
-
-  if (loading) loading.style.display = 'none';
+  const [latest, grouped] = await Promise.all([fetchLatest(section), fetchGrouped(section)]);
+  if (loading) loading.style.display = "none";
   container.innerHTML = '';
 
-  // LATEST
-  if (section !== 'news' && latestData?.latest?.length) {
-    const latestHeading = document.createElement('div');
-    latestHeading.className = 'group-heading red';
-    latestHeading.textContent = 'LATEST';
-    const latestRow = document.createElement('div');
-    latestRow.className = 'scroll-row';
-    latestData.latest.forEach(v => latestRow.appendChild(createCard(v)));
-    container.appendChild(latestHeading);
-    container.appendChild(latestRow);
+  if (section !== 'news' && latest?.latest?.length) {
+    container.appendChild(Object.assign(document.createElement('div'), { className: 'group-heading red', textContent: 'LATEST' }));
+    const row = Object.assign(document.createElement('div'), { className: 'scroll-row' });
+    latest.latest.forEach(v => row.appendChild(createCard(v)));
+    container.appendChild(row);
   }
 
-  // DONGHUA GROUPED
-  if (section === 'donghua' && groupedData.grouped) {
-    const sortedGroups = Object.entries(groupedData.grouped).sort((a, b) => {
-      const latestA = new Date(a[1][0]?.snippet?.publishedAt || 0).getTime();
-      const latestB = new Date(b[1][0]?.snippet?.publishedAt || 0).getTime();
-      return latestB - latestA;
+  if (section === 'donghua' && grouped.grouped) {
+    const sorted = Object.entries(grouped.grouped).sort((a, b) => {
+      return new Date(b[1][0]?.snippet?.publishedAt) - new Date(a[1][0]?.snippet?.publishedAt);
     });
-
-    for (const [name, vids] of sortedGroups) {
+    for (const [name, vids] of sorted) {
       const fresh = vids.filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
       if (!fresh.length) continue;
-
-      const heading = document.createElement('div');
-      heading.className = 'group-heading';
-      heading.textContent = name;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'scroll-row';
-
+      const h = Object.assign(document.createElement('div'), { className: 'group-heading', textContent: name });
+      const wrap = Object.assign(document.createElement('div'), { className: 'scroll-row' });
       fresh.forEach(v => {
-        const vid = v.snippet.resourceId.videoId;
-        loadedVideos[section].add(vid);
-        wrapper.appendChild(createCard(v));
+        loadedVideos[section].add(v.snippet.resourceId.videoId);
+        wrap.appendChild(createCard(v));
       });
-
-      container.appendChild(heading);
-      container.appendChild(wrapper);
+      container.appendChild(h); container.appendChild(wrap);
     }
   }
 
-  // MIXED
-  const mixed = (groupedData.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
+  const mixed = (grouped.mixed || []).filter(v => !loadedVideos[section].has(v.snippet.resourceId.videoId));
   if (mixed.length) {
-    const heading = document.createElement('div');
-    heading.className = 'group-heading';
-    heading.textContent = 'Mixed';
-
-    const wrapper = document.createElement('div');
-    wrapper.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
-
-    if (section === 'news') {
-      wrapper.style.alignItems = 'flex-end';
-      wrapper.style.display = 'flex';
-      wrapper.style.flexDirection = 'column';
-    }
-
+    const h = Object.assign(document.createElement('div'), { className: 'group-heading', textContent: 'Mixed' });
+    const wrap = document.createElement('div');
+    wrap.className = section === 'news' ? 'vertical-scroll' : 'scroll-row';
+    if (section === 'news') Object.assign(wrap.style, { alignItems: 'flex-end', flexDirection: 'column' });
     mixed.forEach(v => {
       loadedVideos[section].add(v.snippet.resourceId.videoId);
-      wrapper.appendChild(createCard(v));
+      wrap.appendChild(createCard(v));
     });
-
-    container.appendChild(heading);
-    container.appendChild(wrapper);
+    container.appendChild(h); container.appendChild(wrap);
   }
 }
 
-// Custom YouTube Modal
 function showModal(video) {
   currentVideoId = video.snippet.resourceId.videoId;
   document.getElementById("modal-title").textContent = video.snippet.title;
   document.getElementById("modal-description").textContent = video.snippet.description;
   document.getElementById("modal-channel").innerHTML = `<a href="https://www.youtube.com/channel/${video.snippet.channelId}" target="_blank">Visit ${video.snippet.channelTitle}'s channel</a>`;
-  document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${currentVideoId}#comments" target="_blank">View Comments on YouTube</a>`;
-  document.getElementById("modal-video").innerHTML = `<div class="yt-wrapper">
-  <div id="yt-player"></div>
-  <div class="yt-controls">
-    <button onclick="ytPlayer.playVideo()">▶</button>
-    <button onclick="ytPlayer.pauseVideo()">⏸</button>
-    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime() - 10, true)">⏪ 10s</button>
-    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime() + 10, true)">10s ⏩</button>
-    <button onclick="toggleMute()">🔊</button>
-    <span id="yt-time">0:00 / 0:00</span>
-    <button onclick="toggleCaptions()">CC</button>
-    <select onchange="setPlaybackQuality(this.value)">
-      <option disabled selected>Quality</option>
-      <option value="small">240p</option>
-      <option value="medium">360p</option>
-      <option value="large">480p</option>
-      <option value="hd720">720p</option>
-      <option value="hd1080">1080p</option>
-    </select>
-    <select onchange="setPlaybackRate(this.value)">
-      <option disabled selected>Speed</option>
-      <option value="0.25">0.25x</option>
-      <option value="0.5">0.5x</option>
-      <option value="1" selected>1x</option>
-      <option value="1.5">1.5x</option>
-      <option value="2">2x</option>
-    </select>
-    <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
-  </div>
-</div>
-`;
-
+  document.getElementById("modal-comments").innerHTML = `<a href="https://www.youtube.com/watch?v=${currentVideoId}#comments" target="_blank">View Comments</a>`;
   document.getElementById("videoModal").style.display = "flex";
-  if (screen.orientation && screen.orientation.lock) screen.orientation.lock("landscape").catch(() => {});
 
   setTimeout(() => {
     ytPlayer = new YT.Player("yt-player", {
-  videoId: currentVideoId,
-  events: { onReady: updateTime, onStateChange: updateTime },
-  playerVars: {
-    autoplay: 1,
-    controls: 0,         // 👈 hide default controls
-    modestbranding: 1,   // 👈 hide YouTube logo
-    rel: 0,              // 👈 no related videos
-    showinfo: 0,         // 👈 hide video info (legacy; may be ignored)
-    fs: 0,               // 👈 hide fullscreen button (optional)
-    iv_load_policy: 3,   // 👈 hide annotations
-    cc_load_policy: 0,   // 👈 captions off by default
-    disablekb: 1         // 👈 disable keyboard controls
-  }
-});
+      videoId: currentVideoId,
+      events: {
+        onReady: () => {
+          setVolume(100);
+          startUpdater();
+          autoHideControls();
+        },
+        onStateChange: autoHideControls
+      },
+      playerVars: {
+        autoplay: 1, controls: 0, modestbranding: 1,
+        rel: 0, fs: 0, iv_load_policy: 3, cc_load_policy: 0, disablekb: 1
+      }
+    });
   }, 100);
 }
 
-function updateTime() {
+function startUpdater() {
   clearInterval(window.timeUpdater);
   window.timeUpdater = setInterval(() => {
-    if (ytPlayer && ytPlayer.getDuration) {
-      const cur = formatTime(ytPlayer.getCurrentTime());
-      const total = formatTime(ytPlayer.getDuration());
-      document.getElementById("yt-time").textContent = `${cur} / ${total}`;
-    }
+    if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+    const t = ytPlayer.getCurrentTime(), d = ytPlayer.getDuration();
+    document.getElementById("yt-time").textContent = `${formatTime(t)} / ${formatTime(d)}`;
+    document.getElementById("yt-progress").style.width = `${(t / d) * 100}%`;
   }, 1000);
 }
 
-function formatTime(s) {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2, '0');
-  return `${m}:${sec}`;
+function formatTime(sec) {
+  const m = Math.floor(sec / 60), s = Math.floor(sec % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
 }
 
-function toggleMute() {
-  if (!ytPlayer) return;
-  ytPlayer.isMuted() ? ytPlayer.unMute() : ytPlayer.mute();
+function seek(e) {
+  const bar = e.currentTarget, pct = (e.offsetX / bar.clientWidth);
+  if (ytPlayer && ytPlayer.getDuration) ytPlayer.seekTo(ytPlayer.getDuration() * pct, true);
+}
+
+function setVolume(v) {
+  if (ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(v);
 }
 
 function toggleCaptions() {
-  if (!ytPlayer) return;
-  const hasCaptions = ytPlayer.getOptions('captions')?.length;
-  hasCaptions ? ytPlayer.setOption('captions', 'track', null) : ytPlayer.loadModule('captions');
-}
-
-function setPlaybackRate(rate) {
-  ytPlayer.setPlaybackRate(parseFloat(rate));
-}
-
-function setPlaybackQuality(q) {
-  ytPlayer.setPlaybackQuality(q);
+  ytPlayer.getOptions('captions')?.length
+    ? ytPlayer.setOption('captions', 'track', null)
+    : ytPlayer.loadModule('captions');
 }
 
 function closeModal(event) {
   if (!event || event.target.id === 'videoModal' || event.target.classList.contains('close-btn')) {
     if (ytPlayer) ytPlayer.destroy();
     ytPlayer = null;
-    document.getElementById("modal-video").innerHTML = '';
+    document.getElementById("yt-player").innerHTML = '';
     document.getElementById("videoModal").style.display = "none";
     clearInterval(window.timeUpdater);
   }
 }
 
-// Auth
+function autoHideControls() {
+  const ctrls = document.getElementById("yt-controls");
+  const wrapper = document.querySelector(".yt-wrapper");
+  const resetTimer = () => {
+    ctrls.classList.remove("hide");
+    clearTimeout(hideTimeout);
+    hideTimeout = setTimeout(() => ctrls.classList.add("hide"), 5000);
+  };
+  wrapper.onmousemove = resetTimer;
+  wrapper.ontouchstart = resetTimer;
+  resetTimer();
+}
+
+// ========== AUTH ==========
+
 async function hashPassword(password) {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function submitAuth() {
-  const mode = document.getElementById("authForm").getAttribute("data-mode");
+  const mode = document.getElementById("authForm").dataset.mode;
   const username = document.getElementById("authUsername").value.trim();
   const password = document.getElementById("authPassword").value;
   if (!username || !password) return showMsg("Fill all fields");
-
   const users = JSON.parse(localStorage.getItem("users") || "{}");
   const hashed = await hashPassword(password);
-
   if (mode === "signup") {
     if (users[username]) return showMsg("User already exists");
     users[username] = hashed;
   } else {
     if (users[username] !== hashed) return showMsg("Invalid credentials");
   }
-
   localStorage.setItem("users", JSON.stringify(users));
   localStorage.setItem("loggedInUser", username);
   hideAuthUI();
@@ -358,14 +378,12 @@ function toggleAuthForm(mode) {
 function showMsg(msg) {
   document.getElementById("authMessage").textContent = msg;
 }
-
 function hideAuthUI() {
   document.getElementById("authForm").style.display = "none";
   document.getElementById("loginBtn").style.display = "none";
   document.getElementById("signupBtn").style.display = "none";
   document.getElementById("logoutBtn").style.display = "inline-block";
 }
-
 function logout() {
   localStorage.removeItem("loggedInUser");
   document.getElementById("loginBtn").style.display = "inline-block";
