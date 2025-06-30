@@ -336,4 +336,11 @@ header {
 .yt-controls select:hover {
   background: #444;
 }
+.loader-video {
+  width: 100%;
+  max-height: 50vh;
+  object-fit: cover;
+  display: block;
+}
+
 
