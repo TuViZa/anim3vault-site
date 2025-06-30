@@ -61,25 +61,34 @@
     .modal-content {
       position: relative; width: 90vw; max-width: 900px;
     }
-    #yt-player { width: 100%; aspect-ratio: 16/9; }
-    .close-btn {
-      position: absolute; top: -20px; right: 0;
-      font-size: 30px; color: var(--pink); cursor: pointer;
-    }
+    #yt-player, .yt-iframe iframe {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
 
     /* ===== Player Overlay Controls ===== */
     .yt-wrapper {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
-    }
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
     .yt-controls {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      padding: 10px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-      display: flex; flex-wrap: wrap; gap: 10px;
-      align-items: center; justify-content: center;
-      transition: opacity 0.3s;
-    }
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  z-index: 2;
+  padding: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
     .yt-controls.hide { opacity: 0; pointer-events: none; }
 
     .yt-controls button, .yt-controls select {
@@ -93,20 +102,29 @@
     }
 
     .yt-timebar {
-      position: absolute; bottom: 50px; left: 10px; right: 10px;
-      height: 8px; border-radius: 10px; background: #222;
-      cursor: pointer;
-    }
+  position: absolute;
+  bottom: 60px;
+  left: 10px; right: 10px;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  z-index: 3;
+  cursor: pointer;
+}
     .yt-timebar-fill {
-      height: 100%; width: 0%;
-      background: var(--grad);
-      border-radius: 10px;
-    }
+  height: 100%;
+  width: 0%;
+  background: var(--grad);
+  border-radius: 3px;
+}
 
-    .yt-time {
-      color: white; position: absolute; left: 15px; bottom: 75px;
-      font-weight: bold;
-    }
+.yt-time {
+  position: absolute;
+  bottom: 75px;
+  left: 20px;
+  z-index: 3;
+  font-weight: bold;
+}
 
     .yt-volume-slider {
       appearance: none; width: 100px; height: 8px;
@@ -154,27 +172,25 @@
   <div class="modal-content" onclick="event.stopPropagation()">
     <span class="close-btn" onclick="closeModal()">&times;</span>
     <div id="modal-title"></div>
-    <div class="yt-wrapper">
-      <div id="yt-player"></div>
-      <div class="yt-timebar" onclick="seek(event)">
-        <div class="yt-timebar-fill" id="yt-progress"></div>
-      </div>
-      <div class="yt-time" id="yt-time">0:00 / 0:00</div>
-      <div class="yt-controls" id="yt-controls">
-        <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()-10,true)">⏪ 10s</button>
-        <button onclick="ytPlayer.playVideo()">▶</button>
-        <button onclick="ytPlayer.pauseVideo()">⏸</button>
-        <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()+10,true)">10s ⏩</button>
-        <input type="range" min="0" max="100" value="100" class="yt-volume-slider" onchange="setVolume(this.value)" />
-        <button onclick="toggleCaptions()">CC</button>
-        <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
-      </div>
+    <div class="yt-wrapper" id="yt-wrapper">
+  <div id="yt-player"></div>
+
+  <!-- Overlaid Controls -->
+  <div class="yt-controls" id="yt-controls">
+    <div class="yt-timebar" onclick="seek(event)">
+      <div class="yt-timebar-fill" id="yt-progress"></div>
     </div>
-    <div id="modal-description"></div>
-    <div id="modal-channel"></div>
-    <div id="modal-comments"></div>
+    <div class="yt-time" id="yt-time">0:00 / 0:00</div>
+    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()-10,true)">⏪ 10s</button>
+    <button onclick="ytPlayer.playVideo()">▶</button>
+    <button onclick="ytPlayer.pauseVideo()">⏸</button>
+    <button onclick="ytPlayer.seekTo(ytPlayer.getCurrentTime()+10,true)">10s ⏩</button>
+    <input type="range" min="0" max="100" value="100" class="yt-volume-slider" onchange="setVolume(this.value)" />
+    <button onclick="toggleCaptions()">CC</button>
+    <button onclick="ytPlayer.getIframe().requestFullscreen()">⛶</button>
   </div>
 </div>
+
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
 let ytPlayer = null, currentVideoId = null;
