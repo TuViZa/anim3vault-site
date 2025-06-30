@@ -253,10 +253,20 @@ function showModal(video) {
 
   setTimeout(() => {
     ytPlayer = new YT.Player("yt-player", {
-      videoId: currentVideoId,
-      events: { onReady: updateTime, onStateChange: updateTime },
-      playerVars: { autoplay: 1, modestbranding: 1, rel: 0 }
-    });
+  videoId: currentVideoId,
+  events: { onReady: updateTime, onStateChange: updateTime },
+  playerVars: {
+    autoplay: 1,
+    controls: 0,         // 👈 hide default controls
+    modestbranding: 1,   // 👈 hide YouTube logo
+    rel: 0,              // 👈 no related videos
+    showinfo: 0,         // 👈 hide video info (legacy; may be ignored)
+    fs: 0,               // 👈 hide fullscreen button (optional)
+    iv_load_policy: 3,   // 👈 hide annotations
+    cc_load_policy: 0,   // 👈 captions off by default
+    disablekb: 1         // 👈 disable keyboard controls
+  }
+});
   }, 100);
 }
 
