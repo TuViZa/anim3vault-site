@@ -140,10 +140,7 @@
 
       latestData.latest.forEach(v => {
         const vid = v.snippet.resourceId.videoId;
-        if (!loadedVideos[section].has(vid)) {
-          loadedVideos[section].add(vid);
-          latestRow.appendChild(createCard(v));
-        }
+        latestRow.appendChild(createCard(v));
       });
 
       container.appendChild(latestHeading);
