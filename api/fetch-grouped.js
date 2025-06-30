@@ -17,7 +17,7 @@ const DONGHUA_TITLES = [
   "mo-tian records", "lord of mysteries", "above the kingdom of god"
 ];
 
-// Helper to normalize strings for fuzzy matching
+// Normalize function for consistent comparison
 function normalize(str) {
   return str.toLowerCase().replace(/[^a-z0-9]/gi, '');
 }
@@ -34,13 +34,12 @@ export default async function handler(req, res) {
     const grouped = {};
     const mixed = [];
 
-    // Prepare map of normalizedTitle -> originalTitle
-    const titleMap = {};
+    const titleMap = {}; // normalized -> original
     if (type === "donghua") {
       for (let keyword of DONGHUA_TITLES) {
         const key = normalize(keyword);
         grouped[key] = [];
-        titleMap[key] = keyword;  // Preserve display name
+        titleMap[key] = keyword;
       }
     }
 
@@ -49,19 +48,28 @@ export default async function handler(req, res) {
       const id = v.snippet?.resourceId?.videoId;
       if (!title || !id || title.toLowerCase().includes("deleted") || title.toLowerCase().includes("private") || addedIds.has(id)) continue;
 
+      const normalizedTitle = normalize(title);
       let matched = false;
+
       if (type === "donghua") {
         for (let keyword of DONGHUA_TITLES) {
           const key = normalize(keyword);
-          if (normalize(title).includes(key)) {
+          if (normalizedTitle.includes(key)) {
             grouped[key].push(v);
             matched = true;
+            console.log(`[MATCHED] "${title}" → "${keyword}"`);
             break;
+          } else {
+            console.log(`[NO MATCH] "${title}" ❌ "${keyword}"`);
           }
         }
       }
 
-      if (!matched) mixed.push(v);
+      if (!matched) {
+        mixed.push(v);
+        console.log(`[MIXED] "${title}"`);
+      }
+
       addedIds.add(id);
     }
 
@@ -69,7 +77,7 @@ export default async function handler(req, res) {
       const sortedGroups = Object.entries(grouped)
         .filter(([_, vids]) => vids.length > 0)
         .map(([key, vids]) => ({
-          name: titleMap[key] || key, // use original title for display
+          name: titleMap[key] || key,
           videos: vids.sort((a, b) => new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt)),
           latestTime: Math.max(...vids.map(v => new Date(v.snippet.publishedAt).getTime()))
         }))
@@ -83,7 +91,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ grouped: sortedGrouped, mixed });
     }
 
-    // For anim3 or news, return only mixed
     return res.status(200).json({ grouped: {}, mixed });
 
   } catch (e) {
