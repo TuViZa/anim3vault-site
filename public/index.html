@@ -58,24 +58,20 @@
     <a class="btn" onclick="showScreen('news', this)">News</a>
   </div>
 
-  <!-- Anim3 section -->
-<div id="anim3" class="screen">
-  <video id="anim3-loader" class="loader-video" autoplay muted loop playsinline></video>
-  <div id="anim3-videos"></div>
-</div>
+  <div id="anim3" class="screen">
+    <div class="loading">Loading Anim3...</div>
+    <div id="anim3-videos"></div>
+  </div>
 
-<!-- Donghua section -->
-<div id="donghua" class="screen active">
-  <video id="donghua-loader" class="loader-video" autoplay muted loop playsinline></video>
-  <div id="donghua-videos"></div>
-</div>
+  <div id="donghua" class="screen active">
+    <div class="loading">Loading Donghua...</div>
+    <div id="donghua-videos"></div>
+  </div>
 
-<!-- News section -->
-<div id="news" class="screen">
-  <video id="news-loader" class="loader-video" autoplay muted loop playsinline></video>
-  <div id="news-videos"></div>
-</div>
-
+  <div id="news" class="screen">
+    <div class="loading">Loading News...</div>
+    <div id="news-videos"></div>
+  </div>
 
   <div id="videoModal" class="modal" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
@@ -90,9 +86,6 @@
 
   <script src="https://www.youtube.com/iframe_api"></script>
 <script>
-const isMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
-const preloadVideo = isMobile ? "OSload.mp4" : "PCload.mp4";
-
 let ytPlayer, currentVideoId = null;
 const loadedVideos = { anim3: new Set(), donghua: new Set(), news: new Set() };
 
@@ -141,18 +134,15 @@ function createCard(video) {
 
 async function loadGrouped(section, containerId) {
   const container = document.getElementById(containerId);
-  const loader = document.getElementById(`${section}-loader`);
-  if (loader) {
-    loader.src = preloadVideo;
-    loader.style.display = "block";
-  }
+  const loading = container.previousElementSibling;
+  if (loading) loading.textContent = "Loading...";
 
   const [latestData, groupedData] = await Promise.all([
     fetchLatest(section),
     fetchGrouped(section)
   ]);
 
-  if (loader) loader.style.display = "none";
+  if (loading) loading.style.display = 'none';
   container.innerHTML = '';
 
   // LATEST
